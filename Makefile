@@ -7,7 +7,7 @@ clean:
 	rm -f ./digest
 
 digest: build
-	./digest ${date}
+	./digest ${date} ${start_date} ${end_date}
 
 create-migration:
 	migrate create -ext sql -dir db/migrations ${name}

@@ -17,6 +17,20 @@ func (date Date) ToTime() time.Time {
 	return time.Date(date.Year, date.Month, date.Day, 0, 0, 0, 0, time.UTC)
 }
 
+func (date Date) Next() Date {
+	asTime := date.ToTime()
+	asTime = asTime.AddDate(0, 0, 1)
+	return Date{
+		Year:  asTime.Year(),
+		Month: asTime.Month(),
+		Day:   asTime.Day(),
+	}
+}
+
+func (date Date) String() string {
+	return fmt.Sprintf("%d-%02d-%02d", date.Year, date.Month, date.Day)
+}
+
 func ParseDate(str string) (Date, error) {
 	parts := strings.Split(str, "-")
 	if len(parts) != 3 {

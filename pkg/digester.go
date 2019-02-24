@@ -3,6 +3,7 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -57,19 +58,34 @@ func fetchTopStories(startTime, endTime time.Time, numberOfStories int) ([]ApiSt
 	baseURL := "https://hn.algolia.com/api/v1/search?numericFilters=created_at_i>%d,created_at_i<%d&hitsPerPage=%d"
 	url := fmt.Sprintf(baseURL, startTime.Unix(), endTime.Unix(), numberOfStories)
 
-	res, err := http.Get(url)
+	res, err := getURL(url, true)
 	if err != nil {
-		return []ApiStory{}, errors.Wrapf(err, "failed to GET url %s", url)
+		return []ApiStory{}, errors.WithMessagef(err, "failed to GET url %s", url)
 	}
 
 	body := &ApiResponse{}
 	defer res.Body.Close()
 	err = json.NewDecoder(res.Body).Decode(body)
 	if err != nil {
-		return []ApiStory{}, errors.Wrap(err, "unable to parse response body")
+		return []ApiStory{}, errors.Wrap(err, "unable to parse response body as JSON")
 	}
 
 	return body.Hits, nil
+}
+
+func getURL(url string, retry bool) (*http.Response, error) {
+	res, err := http.Get(url)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to GET url %s", url)
+	}
+	if res.StatusCode != 200 {
+		if retry {
+			log.Printf("received status code %d, retrying...", res.StatusCode)
+			return getURL(url, false)
+		}
+		return nil, errors.Errorf("url %s returned status code %d", url, res.StatusCode)
+	}
+	return res, nil
 }
 
 func buildDigest(date Date, startTime, endTime time.Time, apiStories []ApiStory) (Digest, error) {
