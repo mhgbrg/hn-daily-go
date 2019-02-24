@@ -9,7 +9,7 @@ build_server:
 	go build ./cmd/server
 
 clean:
-	rm -f ./digest
+	rm -f ./digest ./server
 
 # digesting
 
