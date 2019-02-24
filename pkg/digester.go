@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -97,11 +98,16 @@ func buildDigest(date Date, startTime, endTime time.Time, apiStories []ApiStory)
 			return Digest{}, errors.Wrapf(err, "ObjectID \"%s\" is not an int", apiStory.ObjectID)
 		}
 
+		storyURL, err := url.Parse(apiStory.URL)
+		if err != nil {
+			return Digest{}, errors.Wrapf(err, "url \"%s\" could not be parsed as url", apiStory.URL)
+		}
+
 		stories[i] = Story{
 			ExternalID:  id,
 			PostedAt:    time.Unix(int64(apiStory.CreatedAt), 0),
 			Title:       apiStory.Title,
-			URL:         apiStory.URL,
+			URL:         *storyURL,
 			Author:      apiStory.Author,
 			Points:      apiStory.Points,
 			NumComments: apiStory.NumComments,

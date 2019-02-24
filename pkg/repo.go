@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"database/sql"
+	"net/url"
 
 	"github.com/pkg/errors"
 )
@@ -59,7 +60,7 @@ func insertStories(db DbConn, digestID int, stories []Story) ([]int, error) {
 			story.ExternalID,
 			story.PostedAt,
 			story.Title,
-			story.URL,
+			story.URL.String(),
 			story.Author,
 			story.Points,
 			story.NumComments,
@@ -74,9 +75,10 @@ func insertStories(db DbConn, digestID int, stories []Story) ([]int, error) {
 	return ids, nil
 }
 
+// TODO: Handle situation where no digest exists for date explicitly.
 func LoadDigest(db DbConn, date Date) (Digest, error) {
 	var id int
-	var digest Digest
+	digest := Digest{Date: date}
 	err := db.QueryRow(
 		`SELECT
 			id,
@@ -124,11 +126,12 @@ func LoadDigest(db DbConn, date Date) (Digest, error) {
 	digest.Stories = make([]Story, 0)
 	for rows.Next() {
 		var story Story
+		var storyURLStr string
 		err = rows.Scan(
 			&story.ExternalID,
 			&story.PostedAt,
 			&story.Title,
-			&story.URL,
+			&storyURLStr,
 			&story.Author,
 			&story.Points,
 			&story.NumComments,
@@ -136,6 +139,11 @@ func LoadDigest(db DbConn, date Date) (Digest, error) {
 		if err != nil {
 			return Digest{}, errors.Wrap(err, "error reading story from row")
 		}
+		storyURL, err := url.Parse(storyURLStr)
+		if err != nil {
+			return Digest{}, errors.Wrap(err, "error parsing url %s as url")
+		}
+		story.URL = *storyURL
 		digest.Stories = append(digest.Stories, story)
 	}
 

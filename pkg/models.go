@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -53,7 +54,7 @@ type Story struct {
 	ExternalID  int
 	PostedAt    time.Time
 	Title       string
-	URL         string
+	URL         url.URL
 	Author      string
 	Points      int
 	NumComments int
