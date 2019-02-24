@@ -18,17 +18,21 @@ func (date Date) ToTime() time.Time {
 }
 
 func (date Date) Next() Date {
-	asTime := date.ToTime()
-	asTime = asTime.AddDate(0, 0, 1)
-	return Date{
-		Year:  asTime.Year(),
-		Month: asTime.Month(),
-		Day:   asTime.Day(),
-	}
+	t := date.ToTime()
+	t = t.AddDate(0, 0, 1)
+	return FromTime(t)
 }
 
 func (date Date) String() string {
 	return fmt.Sprintf("%d-%02d-%02d", date.Year, date.Month, date.Day)
+}
+
+func FromTime(t time.Time) Date {
+	return Date{
+		Year:  t.Year(),
+		Month: t.Month(),
+		Day:   t.Day(),
+	}
 }
 
 func ParseDate(str string) (Date, error) {
@@ -46,7 +50,6 @@ func ParseDate(str string) (Date, error) {
 }
 
 type Story struct {
-	ID          int
 	ExternalID  int
 	PostedAt    time.Time
 	Title       string

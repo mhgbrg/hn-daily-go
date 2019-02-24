@@ -1,1 +1,4 @@
 digest
+!digest/
+server
+!server/
