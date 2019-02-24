@@ -21,6 +21,9 @@ digest: build_digest
 serve: build_server
 	./server
 
+watch_server:
+	ag -l -u | entr -r make serve
+
 # db management
 
 create-migration:
