@@ -32,7 +32,7 @@ func insertDigest(db DbConn, d Digest) (int, error) {
 		RETURNING id
 	`, d.Date.ToTime(), d.StartTime, d.EndTime, d.GeneratedAt).Scan(&id)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to insert digest")
+		return 0, errors.Wrap(err, "insert query for table `digest` failed")
 	}
 	return id, nil
 }
@@ -44,7 +44,7 @@ func insertStories(db DbConn, digestID int, stories []Story) ([]int, error) {
 		RETURNING id
 	`)
 	if err != nil {
-		return []int{}, errors.Wrap(err, "failed to prepare insert story statement")
+		return []int{}, errors.Wrap(err, "failed to prepare insert statement for stories")
 	}
 
 	ids := make([]int, len(stories))
@@ -61,7 +61,7 @@ func insertStories(db DbConn, digestID int, stories []Story) ([]int, error) {
 			digestID,
 		).Scan(&id)
 		if err != nil {
-			return []int{}, errors.Wrap(err, "failed to insert story")
+			return []int{}, errors.Wrap(err, "insert query for table `story` failed")
 		}
 		ids = append(ids, id)
 	}
