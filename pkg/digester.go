@@ -98,9 +98,15 @@ func buildDigest(date Date, startTime, endTime time.Time, apiStories []ApiStory)
 			return Digest{}, errors.Wrapf(err, "ObjectID \"%s\" is not an int", apiStory.ObjectID)
 		}
 
-		storyURL, err := url.Parse(apiStory.URL)
-		if err != nil {
-			return Digest{}, errors.Wrapf(err, "url \"%s\" could not be parsed as url", apiStory.URL)
+		var storyURL *url.URL
+		if apiStory.URL == "" {
+			askHNURL := fmt.Sprintf("https://news.ycombinator.com/item?id=%s", apiStory.ObjectID)
+			storyURL, _ = url.Parse(askHNURL)
+		} else {
+			storyURL, err = url.Parse(apiStory.URL)
+			if err != nil {
+				return Digest{}, errors.Wrapf(err, "url \"%s\" could not be parsed as url", apiStory.URL)
+			}
 		}
 
 		stories[i] = Story{
