@@ -1,14 +1,23 @@
 package main
 
 import (
-	"fmt"
+	"database/sql"
 	"log"
 	"net/http"
+
+	_ "github.com/lib/pq" // load PSQL driver
+
+	"github.com/mhgbrg/hndaily/pkg/handlers"
 )
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "hello world!")
-	})
-	log.Fatal(http.ListenAndServe(":1337", nil))
+	// TODO: Read database info from environment.
+	db, err := sql.Open("postgres", "user=hndaily dbname=hndaily sslmode=disable")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	http.HandleFunc("/digest/", handlers.GetDigest(db))
+	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }

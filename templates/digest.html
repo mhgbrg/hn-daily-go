@@ -1,0 +1,160 @@
+<!DOCTYPE HTML>
+
+<html>
+  <head>
+    <title>Hacker News Daily - {{.Digest.Weekday}}, {{.Digest.Month}} {{.Digest.Day}}, {{.Digest.Year}}</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=575" />
+    <!-- TODO: Install reset.css with npm and include it locally instead of sourcing from a cdn. -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.css" />
+    <style>
+      /* TODO: Install font with npm and include it locally instead of sourcing from google. */
+      @import url('https://fonts.googleapis.com/css?family=Roboto+Slab:300,400|Roboto:300');
+
+      :root {
+        --off-black: #323232;
+        --font-weight-light: 300;
+        --font-weight-normal: 400;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        padding: 50px 10px;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+
+      a {
+        color: #4d98ce;
+      }
+
+      /* --- HEADER --- */
+      header {
+        text-align: center;
+        font-family: 'Roboto Slab', serif;
+      }
+
+      header > * {
+        font-weight: var(--font-weight-light);
+        color: var(--off-black);
+      }
+
+      header > h1 {
+        font-size: 50px;
+        margin-bottom: 10px;
+      }
+
+      header > h1 > a {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      header > p {
+        font-size: 28px;
+      }
+
+      /* --- STORIES --- */
+      .stories {
+        max-width: 1200px;
+        margin-top: 50px;
+        margin-bottom: 50px;
+      }
+
+      .story {
+        position: relative;
+        margin-bottom: 40px;
+      }
+
+      .story:last-child {
+        margin-bottom: 0;
+      }
+
+      .rank-and-title {
+        display: flex;
+        justify-content: flex-start;
+      }
+
+      .rank {
+        font-family: 'Roboto Slab', serif;
+        font-weight: var(--font-weight-light);
+        font-size: 18px;
+        color: #7e7e7e;
+        width: 30px;
+        text-align: right;
+        margin-right: 10px;
+        margin-top: 5px;
+        flex-shrink: 0;
+      }
+
+      .title {
+        font-family: 'Roboto Slab', serif;
+        font-weight: var(--font-weight-normal);
+        color: #df4242;
+        font-size: 28px;
+        margin-bottom: 6px;
+      }
+
+      .title.is-read {
+        font-weight: var(--font-weight-light);
+      }
+
+      .title a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .meta-info {
+        font-family: 'Roboto', sans-serif;
+        font-size: 16px;
+        font-weight: var(--font-weight-light);
+        color: var(--off-black);
+        margin-left: 40px;
+      }
+
+      .meta-info a {
+        color: var(--off-black);
+        text-decoration: none;
+      }
+
+      .meta-info a:hover {
+        text-decoration: underline;
+      }
+
+      /* --- FOOTER --- */
+      footer {
+        text-align: center;
+        font-weight: var(--font-weight-light);
+        font-size: 12px;
+        color: var(--off-black);
+        font-family: 'Roboto', sans-serif;
+      }
+
+      footer > p {
+        margin: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1><a href="/">Hacker News Daily</a></h1>
+      <p>{{.Digest.Weekday}}, {{.Digest.Month}} {{.Digest.Day}}, {{.Digest.Year}}</p>
+    </header>
+    <div class="stories">
+      {{range .Digest.Stories}}
+        <div class="story">
+          <div class="rank-and-title">
+            <p class="rank">#{{.Rank}}</p>
+            <h2 class="title{{if .IsRead}} is-read{{end}}"><a href="{{.URL}}">{{.Title}}</a></h2>
+          </div>
+          <p class="meta-info">{{.Site}} &middot; {{.Points}} points &middot; <a href="{{.CommentsURL}}">{{.NumComments}} comments</a></p>
+        </div>
+      {{end}}
+    </div>
+    <footer>
+      <p>Generated at {{.Digest.GeneratedAt}}</p>
+    </footer>
+  </body>
+</html>
