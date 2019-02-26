@@ -34,7 +34,26 @@ func GetDigest(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		viewData := createViewData(digest)
+		userID, err := GetUserID(w, r)
+		if err != nil {
+			log.Printf("%+v\n", err)
+			http.NotFound(w, r)
+			return
+		}
+
+		storyIDs := make([]int, len(digest.Stories))
+		for i, story := range digest.Stories {
+			storyIDs[i] = story.ID
+		}
+
+		storyReadMap, err := pkg.AreStoriesReadByUser(db, userID, storyIDs)
+		if err != nil {
+			log.Printf("%+v\n", err)
+			http.NotFound(w, r)
+			return
+		}
+
+		viewData := createViewData(digest, storyReadMap)
 		var responseBody bytes.Buffer
 		err = template.Execute(&responseBody, viewData)
 		if err != nil {
@@ -66,7 +85,7 @@ type ViewStory struct {
 	IsRead      bool
 }
 
-func createViewData(digest pkg.Digest) ViewData {
+func createViewData(digest pkg.Digest, storyReadMap map[int]bool) ViewData {
 	viewData := ViewData{
 		Weekday:     digest.Date.ToTime().Weekday().String(),
 		Month:       digest.Date.Month.String(),
@@ -85,7 +104,7 @@ func createViewData(digest pkg.Digest) ViewData {
 			Points:      story.Points,
 			NumComments: story.NumComments,
 			CommentsURL: fmt.Sprintf("https://news.ycombinator.com/item?id=%d", story.ExternalID),
-			IsRead:      false,
+			IsRead:      storyReadMap[story.ID],
 		}
 		viewData.Stories[i] = viewStory
 	}

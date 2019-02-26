@@ -3,6 +3,8 @@ package pkg
 import (
 	"database/sql"
 
+	"github.com/lib/pq"
+
 	"github.com/pkg/errors"
 )
 
@@ -195,6 +197,40 @@ func MarkStoryAsRead(db DbConn, userID string, storyID int) error {
 	}
 
 	return nil
+}
+
+func AreStoriesReadByUser(db DbConn, userID string, storyIDs []int) (map[int]bool, error) {
+	rows, err := db.Query(
+		`SELECT
+			story_id
+		FROM
+			user_story_read
+		WHERE
+			user_id = $1
+			AND story_id = ANY($2)`,
+		userID,
+		pq.Array(storyIDs),
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "select query from table `user_story_read` failed")
+	}
+	defer rows.Close()
+
+	readMap := make(map[int]bool)
+	for _, storyID := range storyIDs {
+		readMap[storyID] = false
+	}
+
+	for rows.Next() {
+		var storyID int
+		err := rows.Scan(&storyID)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to scan story_id from user_story_read query")
+		}
+		readMap[storyID] = true
+	}
+
+	return readMap, nil
 }
 
 type scannable interface {
