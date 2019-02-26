@@ -7,6 +7,8 @@ import (
 
 	_ "github.com/lib/pq" // load PSQL driver
 	"github.com/mhgbrg/hndaily/pkg"
+	"github.com/mhgbrg/hndaily/pkg/models"
+	"github.com/mhgbrg/hndaily/pkg/repo"
 
 	"github.com/pkg/errors"
 )
@@ -20,7 +22,7 @@ func main() {
 	}
 	if len(args) == 1 {
 		dateStr := args[0]
-		date, err := pkg.ParseDate(dateStr)
+		date, err := models.ParseDate(dateStr)
 		if err != nil {
 			log.Fatalf("%+v", err)
 		}
@@ -31,11 +33,11 @@ func main() {
 	} else if len(args) == 2 {
 		startDateStr := args[0]
 		endDateStr := args[1]
-		startDate, err := pkg.ParseDate(startDateStr)
+		startDate, err := models.ParseDate(startDateStr)
 		if err != nil {
 			log.Fatalf("%+v", err)
 		}
-		endDate, err := pkg.ParseDate(endDateStr)
+		endDate, err := models.ParseDate(endDateStr)
 		if err != nil {
 			log.Fatalf("%+v", err)
 		}
@@ -47,11 +49,12 @@ func main() {
 	log.Print("done!")
 }
 
-func digestSingleDate(date pkg.Date) error {
+func digestSingleDate(date models.Date) error {
 	return digestDateRange(date, date)
 }
 
-func digestDateRange(startDate, endDate pkg.Date) error {
+func digestDateRange(startDate, endDate models.Date) error {
+	// TODO: Read database info from environment.
 	db, err := sql.Open("postgres", "user=hndaily dbname=hndaily sslmode=disable")
 	if err != nil {
 		return errors.Wrap(err, "failed to open connection to database")
@@ -71,7 +74,7 @@ func digestDateRange(startDate, endDate pkg.Date) error {
 			return errors.Wrap(err, "failed to open db transaction")
 		}
 
-		if err = pkg.SaveDigest(tx, d); err != nil {
+		if err = repo.SaveDigest(tx, d); err != nil {
 			if err2 := tx.Rollback(); err2 != nil {
 				return errors.Wrap(err2, "failed to rollback transaction")
 			}

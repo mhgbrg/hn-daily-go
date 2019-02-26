@@ -1,4 +1,4 @@
-package handlers
+package web
 
 import (
 	"bytes"
@@ -13,30 +13,27 @@ import (
 	"github.com/mhgbrg/hndaily/pkg/repo"
 )
 
-func GetDigest(db *sql.DB) func(http.ResponseWriter, *http.Request) {
+func GetDigest(db *sql.DB) CustomHandlerFunc {
 	template, err := templatelib.ParseFiles("templates/digest.html")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) (fmt.Stringer, error) {
 		dateStr := r.URL.Path[len("/digest/"):]
 		date, err := models.ParseDate(dateStr)
 		if err != nil {
-			ReturnError(w, err, 404)
-			return
+			return nil, NotFoundError(err)
 		}
 
 		digest, err := repo.LoadDigest(db, date)
 		if err != nil {
-			ReturnError(w, err, 500)
-			return
+			return nil, InternalServerError(err)
 		}
 
 		userID, err := GetUserID(w, r)
 		if err != nil {
-			ReturnError(w, err, 500)
-			return
+			return nil, InternalServerError(err)
 		}
 
 		storyIDs := make([]int, len(digest.Stories))
@@ -46,18 +43,17 @@ func GetDigest(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 
 		storyReadMap, err := repo.HasReadStories(db, userID, storyIDs)
 		if err != nil {
-			ReturnError(w, err, 500)
-			return
+			return nil, InternalServerError(err)
 		}
 
 		viewData := createViewData(digest, storyReadMap)
 		var responseBody bytes.Buffer
 		err = template.Execute(&responseBody, viewData)
 		if err != nil {
-			ReturnError(w, err, 500)
-			return
+			return nil, InternalServerError(err)
 		}
-		fmt.Fprint(w, responseBody.String())
+
+		return &responseBody, nil
 	}
 }
 

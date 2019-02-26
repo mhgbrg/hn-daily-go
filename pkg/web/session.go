@@ -1,12 +1,10 @@
-package handlers
+package web
 
 import (
-	"fmt"
-	"log"
-	"math/rand"
 	"net/http"
 
 	"github.com/gorilla/sessions"
+	"github.com/mhgbrg/hndaily/pkg/models"
 	"github.com/pkg/errors"
 )
 
@@ -21,23 +19,10 @@ func GetUserID(w http.ResponseWriter, r *http.Request) (string, error) {
 	userIDVal := session.Values["user_id"]
 	userID, ok := userIDVal.(string)
 	if !ok {
-		userID = generateUserID()
+		userID = models.GenerateUserID()
 		session.Values["user_id"] = userID
 		session.Save(r, w)
 	}
 
 	return userID, nil
-}
-
-func generateUserID() string {
-	b := make([]byte, userIDLength)
-	for i := range b {
-		b[i] = userIDChars[rand.Intn(len(userIDChars))]
-	}
-	return string(b)
-}
-
-func ReturnError(w http.ResponseWriter, err error, code int) {
-	log.Printf("%+v\n", err)
-	http.Error(w, fmt.Sprintf("%+v", err), code)
 }
