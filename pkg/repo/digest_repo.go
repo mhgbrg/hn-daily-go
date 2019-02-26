@@ -56,6 +56,7 @@ func loadDigestRow(db DbConn, date models.Date) (models.Digest, error) {
 	row := db.QueryRow(
 		`SELECT
 			id,
+			date,
 			start_time,
 			end_time,
 			generated_at
@@ -72,8 +73,6 @@ func loadDigestRow(db DbConn, date models.Date) (models.Digest, error) {
 	if err != nil {
 		return models.Digest{}, errors.WithMessage(err, "select query for table `digest` failed")
 	}
-	// TODO: Move to scan function
-	digest.Date = date
 
 	return digest, nil
 }
@@ -82,6 +81,7 @@ func scanDigest(s scannable) (models.Digest, error) {
 	var digest models.Digest
 	err := s.Scan(
 		&digest.ID,
+		&digest.Date,
 		&digest.StartTime,
 		&digest.EndTime,
 		&digest.GeneratedAt,

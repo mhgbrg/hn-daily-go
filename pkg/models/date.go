@@ -29,6 +29,16 @@ func (date Date) String() string {
 	return fmt.Sprintf("%d-%02d-%02d", date.Year, date.Month, date.Day)
 }
 
+func (date *Date) Scan(src interface{}) error {
+	srcTime, ok := src.(time.Time)
+	if !ok {
+		return errors.Errorf("failed to cast value %s to time.Time", src)
+	}
+
+	*date = FromTime(srcTime)
+	return nil
+}
+
 func FromTime(t time.Time) Date {
 	return Date{
 		Year:  t.Year(),

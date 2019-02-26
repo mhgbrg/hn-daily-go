@@ -1,8 +1,9 @@
 package models
 
 import (
-	"errors"
 	"net/url"
+
+	"github.com/pkg/errors"
 )
 
 type URL url.URL
@@ -10,12 +11,12 @@ type URL url.URL
 func (u *URL) Scan(src interface{}) error {
 	srcStr, ok := src.(string)
 	if !ok {
-		return errors.New("failed to cast value %s to string")
+		return errors.Errorf("failed to cast value %s to string", src)
 	}
 
 	u2, err := url.Parse(srcStr)
 	if err != nil {
-		return errors.New("failed to parse string %s as url")
+		return errors.Errorf("failed to parse string %s as url", srcStr)
 	}
 
 	*u = URL(*u2)
