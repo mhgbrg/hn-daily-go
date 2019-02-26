@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"database/sql"
-	"net/url"
 
 	"github.com/pkg/errors"
 )
@@ -10,6 +9,7 @@ import (
 type DbConn interface {
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
+	Exec(query string, args ...interface{}) (sql.Result, error)
 	Prepare(query string) (*sql.Stmt, error)
 }
 
@@ -77,9 +77,7 @@ func insertStories(db DbConn, digestID int, stories []Story) ([]int, error) {
 
 // TODO: Handle situation where no digest exists for date explicitly.
 func LoadDigest(db DbConn, date Date) (Digest, error) {
-	var id int
-	digest := Digest{Date: date}
-	err := db.QueryRow(
+	row := db.QueryRow(
 		`SELECT
 			id,
 			start_time,
@@ -93,18 +91,17 @@ func LoadDigest(db DbConn, date Date) (Digest, error) {
 			generated_at DESC
 		LIMIT 1`,
 		date.ToTime(),
-	).Scan(
-		&id,
-		&digest.StartTime,
-		&digest.EndTime,
-		&digest.GeneratedAt,
 	)
+	digest, err := scanDigest(row)
+	// TODO: Move to scan function
+	digest.Date = date
 	if err != nil {
-		return Digest{}, errors.Wrap(err, "select query for table `digest` failed")
+		return Digest{}, errors.WithMessage(err, "select query for table `digest` failed")
 	}
 
 	rows, err := db.Query(
 		`SELECT
+			id,
 			external_id,
 			posted_at,
 			title,
@@ -116,7 +113,7 @@ func LoadDigest(db DbConn, date Date) (Digest, error) {
 			story
 		WHERE
 			digest_id = $1`,
-		id,
+		digest.ID,
 	)
 	if err != nil {
 		return Digest{}, errors.Wrap(err, "select query for table `story` failed")
@@ -125,25 +122,10 @@ func LoadDigest(db DbConn, date Date) (Digest, error) {
 
 	digest.Stories = make([]Story, 0)
 	for rows.Next() {
-		var story Story
-		var storyURLStr string
-		err = rows.Scan(
-			&story.ExternalID,
-			&story.PostedAt,
-			&story.Title,
-			&storyURLStr,
-			&story.Author,
-			&story.Points,
-			&story.NumComments,
-		)
+		story, err := scanStory(rows)
 		if err != nil {
-			return Digest{}, errors.Wrap(err, "error reading story from row")
+			return Digest{}, errors.WithMessage(err, "error scanning story")
 		}
-		storyURL, err := url.Parse(storyURLStr)
-		if err != nil {
-			return Digest{}, errors.Wrap(err, "error parsing url %s as url")
-		}
-		story.URL = *storyURL
 		digest.Stories = append(digest.Stories, story)
 	}
 
@@ -152,4 +134,101 @@ func LoadDigest(db DbConn, date Date) (Digest, error) {
 	}
 
 	return digest, nil
+}
+
+func GetStory(db DbConn, id int) (Story, error) {
+	var story Story
+	row := db.QueryRow(
+		`SELECT
+			id,
+			external_id,
+			posted_at,
+			title,
+			url,
+			author,
+			points,
+			num_comments
+		FROM
+			story
+		WHERE
+			id = $1`,
+		id,
+	)
+	story, err := scanStory(row)
+	if err != nil {
+		return Story{}, errors.Wrap(err, "select query on table `story` failed")
+	}
+
+	return story, nil
+}
+
+func MarkStoryAsRead(db DbConn, userID string, storyID int) error {
+	var alreadyRead bool
+	err := db.QueryRow(
+		`SELECT exists(
+			SELECT 1
+			FROM
+				user_story_read
+			WHERE
+				user_id = $1
+				AND story_id = $2
+		)`,
+		userID,
+		storyID,
+	).Scan(&alreadyRead)
+	if err != nil {
+		return errors.Wrap(err, "exists query on table `user_story_read` failed")
+	}
+
+	if alreadyRead {
+		return nil
+	}
+
+	_, err = db.Exec(
+		`INSERT INTO user_story_read (user_id, story_id)
+		VALUES ($1, $2)`,
+		userID,
+		storyID,
+	)
+	if err != nil {
+		return errors.Wrap(err, "insert into query on `user_story_read` table failed")
+	}
+
+	return nil
+}
+
+type scannable interface {
+	Scan(dest ...interface{}) error
+}
+
+func scanDigest(s scannable) (Digest, error) {
+	var digest Digest
+	err := s.Scan(
+		&digest.ID,
+		&digest.StartTime,
+		&digest.EndTime,
+		&digest.GeneratedAt,
+	)
+	if err != nil {
+		return Digest{}, errors.Wrap(err, "scan from scannable to digest failed")
+	}
+	return digest, nil
+}
+
+func scanStory(s scannable) (Story, error) {
+	var story Story
+	err := s.Scan(
+		&story.ID,
+		&story.ExternalID,
+		&story.PostedAt,
+		&story.Title,
+		&story.URL,
+		&story.Author,
+		&story.Points,
+		&story.NumComments,
+	)
+	if err != nil {
+		return Story{}, errors.Wrap(err, "scan from scannable to story failed")
+	}
+	return story, nil
 }

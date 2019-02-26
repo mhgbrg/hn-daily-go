@@ -19,5 +19,6 @@ func main() {
 	defer db.Close()
 
 	http.HandleFunc("/digest/", handlers.GetDigest(db))
+	http.HandleFunc("/story/", handlers.ReadStory(db))
 	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }

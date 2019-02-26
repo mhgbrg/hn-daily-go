@@ -113,7 +113,7 @@ func buildDigest(date Date, startTime, endTime time.Time, apiStories []ApiStory)
 			ExternalID:  id,
 			PostedAt:    time.Unix(int64(apiStory.CreatedAt), 0),
 			Title:       apiStory.Title,
-			URL:         *storyURL,
+			URL:         URL(*storyURL),
 			Author:      apiStory.Author,
 			Points:      apiStory.Points,
 			NumComments: apiStory.NumComments,

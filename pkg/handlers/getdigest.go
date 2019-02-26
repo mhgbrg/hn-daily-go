@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
-	"html/template"
+	templatelib "html/template"
 	"log"
 	"net/http"
 	"time"
@@ -13,7 +13,7 @@ import (
 )
 
 func GetDigest(db *sql.DB) func(http.ResponseWriter, *http.Request) {
-	t, err := template.ParseFiles("templates/digest.html")
+	template, err := templatelib.ParseFiles("templates/digest.html")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,9 +34,9 @@ func GetDigest(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		viewDigest := createViewData(digest)
+		viewData := createViewData(digest)
 		var responseBody bytes.Buffer
-		err = t.Execute(&responseBody, viewDigest)
+		err = template.Execute(&responseBody, viewData)
 		if err != nil {
 			log.Printf("%+v\n", err)
 			http.NotFound(w, r)
@@ -47,10 +47,6 @@ func GetDigest(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 }
 
 type ViewData struct {
-	Digest ViewDigest
-}
-
-type ViewDigest struct {
 	Year        int
 	Month       string
 	Day         int
@@ -71,7 +67,7 @@ type ViewStory struct {
 }
 
 func createViewData(digest pkg.Digest) ViewData {
-	viewDigest := ViewDigest{
+	viewData := ViewData{
 		Weekday:     digest.Date.ToTime().Weekday().String(),
 		Month:       digest.Date.Month.String(),
 		Day:         digest.Date.Day,
@@ -84,15 +80,15 @@ func createViewData(digest pkg.Digest) ViewData {
 		viewStory := ViewStory{
 			Rank:        i + 1,
 			Title:       story.Title,
-			URL:         story.URL.String(),
+			URL:         fmt.Sprintf("/story/%d", story.ID),
 			Site:        story.URL.Hostname(),
 			Points:      story.Points,
 			NumComments: story.NumComments,
 			CommentsURL: fmt.Sprintf("https://news.ycombinator.com/item?id=%d", story.ExternalID),
 			IsRead:      false,
 		}
-		viewDigest.Stories[i] = viewStory
+		viewData.Stories[i] = viewStory
 	}
 
-	return ViewData{Digest: viewDigest}
+	return viewData
 }

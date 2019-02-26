@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type Date struct {
@@ -50,17 +52,46 @@ func ParseDate(str string) (Date, error) {
 	return Date{Year: y, Month: time.Month(m), Day: d}, nil
 }
 
+type URL url.URL
+
+func (u *URL) Scan(src interface{}) error {
+	srcStr, ok := src.(string)
+	if !ok {
+		return errors.New("failed to cast value %s to string")
+	}
+
+	u2, err := url.Parse(srcStr)
+	if err != nil {
+		return errors.New("failed to parse string %s as url")
+	}
+
+	*u = URL(*u2)
+	return nil
+}
+
+func (u *URL) String() string {
+	u2 := url.URL(*u)
+	return u2.String()
+}
+
+func (u *URL) Hostname() string {
+	u2 := url.URL(*u)
+	return u2.Hostname()
+}
+
 type Story struct {
+	ID          int
 	ExternalID  int
 	PostedAt    time.Time
 	Title       string
-	URL         url.URL
+	URL         URL
 	Author      string
 	Points      int
 	NumComments int
 }
 
 type Digest struct {
+	ID          int
 	Date        Date
 	StartTime   time.Time
 	EndTime     time.Time

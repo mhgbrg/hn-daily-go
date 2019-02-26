@@ -2,7 +2,7 @@
 
 <html>
   <head>
-    <title>Hacker News Daily - {{.Digest.Weekday}}, {{.Digest.Month}} {{.Digest.Day}}, {{.Digest.Year}}</title>
+    <title>Hacker News Daily - {{.Weekday}}, {{.Month}} {{.Day}}, {{.Year}}</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=575" />
     <!-- TODO: Install reset.css with npm and include it locally instead of sourcing from a cdn. -->
@@ -140,10 +140,10 @@
   <body>
     <header>
       <h1><a href="/">Hacker News Daily</a></h1>
-      <p>{{.Digest.Weekday}}, {{.Digest.Month}} {{.Digest.Day}}, {{.Digest.Year}}</p>
+      <p>{{.Weekday}}, {{.Month}} {{.Day}}, {{.Year}}</p>
     </header>
     <div class="stories">
-      {{range .Digest.Stories}}
+      {{range .Stories}}
         <div class="story">
           <div class="rank-and-title">
             <p class="rank">#{{.Rank}}</p>
@@ -154,7 +154,7 @@
       {{end}}
     </div>
     <footer>
-      <p>Generated at {{.Digest.GeneratedAt}}</p>
+      <p>Generated at {{.GeneratedAt}}</p>
     </footer>
   </body>
 </html>
