@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mhgbrg/hndaily/pkg/models"
 	"github.com/pkg/errors"
 )
 
@@ -26,20 +27,20 @@ type ApiStory struct {
 	NumComments int    `json:"num_comments"`
 }
 
-func FetchDigest(date Date, numberOfStories int) (Digest, error) {
+func FetchDigest(date models.Date, numberOfStories int) (models.Digest, error) {
 	startTime, endTime := getTimestamps(date)
 	stories, err := fetchTopStories(startTime, endTime, numberOfStories)
 	if err != nil {
-		return Digest{}, errors.WithMessage(err, "failed to fetch stories from API")
+		return models.Digest{}, errors.WithMessage(err, "failed to fetch stories from API")
 	}
 	digest, err := buildDigest(date, startTime, endTime, stories)
 	if err != nil {
-		return Digest{}, errors.WithMessage(err, "failed to build digest from API response")
+		return models.Digest{}, errors.WithMessage(err, "failed to build digest from API response")
 	}
 	return digest, nil
 }
 
-func getTimestamps(date Date) (time.Time, time.Time) {
+func getTimestamps(date models.Date) (time.Time, time.Time) {
 	location, err := time.LoadLocation("America/New_York")
 	if err != nil {
 		panic("Failed to load location \"America/New_York\"")
@@ -89,13 +90,13 @@ func getURL(url string, retry bool) (*http.Response, error) {
 	return res, nil
 }
 
-func buildDigest(date Date, startTime, endTime time.Time, apiStories []ApiStory) (Digest, error) {
-	stories := make([]Story, len(apiStories))
+func buildDigest(date models.Date, startTime, endTime time.Time, apiStories []ApiStory) (models.Digest, error) {
+	stories := make([]models.Story, len(apiStories))
 
 	for i, apiStory := range apiStories {
 		id, err := strconv.Atoi(apiStory.ObjectID)
 		if err != nil {
-			return Digest{}, errors.Wrapf(err, "ObjectID \"%s\" is not an int", apiStory.ObjectID)
+			return models.Digest{}, errors.Wrapf(err, "ObjectID \"%s\" is not an int", apiStory.ObjectID)
 		}
 
 		var storyURL *url.URL
@@ -105,22 +106,22 @@ func buildDigest(date Date, startTime, endTime time.Time, apiStories []ApiStory)
 		} else {
 			storyURL, err = url.Parse(apiStory.URL)
 			if err != nil {
-				return Digest{}, errors.Wrapf(err, "url \"%s\" could not be parsed as url", apiStory.URL)
+				return models.Digest{}, errors.Wrapf(err, "url \"%s\" could not be parsed as url", apiStory.URL)
 			}
 		}
 
-		stories[i] = Story{
+		stories[i] = models.Story{
 			ExternalID:  id,
 			PostedAt:    time.Unix(int64(apiStory.CreatedAt), 0),
 			Title:       apiStory.Title,
-			URL:         URL(*storyURL),
+			URL:         models.URL(*storyURL),
 			Author:      apiStory.Author,
 			Points:      apiStory.Points,
 			NumComments: apiStory.NumComments,
 		}
 	}
 
-	return Digest{
+	return models.Digest{
 		Date:        date,
 		StartTime:   startTime,
 		EndTime:     endTime,

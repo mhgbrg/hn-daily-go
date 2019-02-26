@@ -9,7 +9,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mhgbrg/hndaily/pkg"
+	"github.com/mhgbrg/hndaily/pkg/models"
+	"github.com/mhgbrg/hndaily/pkg/repo"
 )
 
 func GetDigest(db *sql.DB) func(http.ResponseWriter, *http.Request) {
@@ -20,24 +21,21 @@ func GetDigest(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		dateStr := r.URL.Path[len("/digest/"):]
-		date, err := pkg.ParseDate(dateStr)
+		date, err := models.ParseDate(dateStr)
 		if err != nil {
-			log.Printf("%+v\n", err)
-			http.NotFound(w, r)
+			ReturnError(w, err, 404)
 			return
 		}
 
-		digest, err := pkg.LoadDigest(db, date)
+		digest, err := repo.LoadDigest(db, date)
 		if err != nil {
-			log.Printf("%+v\n", err)
-			http.NotFound(w, r)
+			ReturnError(w, err, 500)
 			return
 		}
 
 		userID, err := GetUserID(w, r)
 		if err != nil {
-			log.Printf("%+v\n", err)
-			http.NotFound(w, r)
+			ReturnError(w, err, 500)
 			return
 		}
 
@@ -46,10 +44,9 @@ func GetDigest(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 			storyIDs[i] = story.ID
 		}
 
-		storyReadMap, err := pkg.AreStoriesReadByUser(db, userID, storyIDs)
+		storyReadMap, err := repo.HasReadStories(db, userID, storyIDs)
 		if err != nil {
-			log.Printf("%+v\n", err)
-			http.NotFound(w, r)
+			ReturnError(w, err, 500)
 			return
 		}
 
@@ -57,8 +54,7 @@ func GetDigest(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 		var responseBody bytes.Buffer
 		err = template.Execute(&responseBody, viewData)
 		if err != nil {
-			log.Printf("%+v\n", err)
-			http.NotFound(w, r)
+			ReturnError(w, err, 500)
 			return
 		}
 		fmt.Fprint(w, responseBody.String())
@@ -85,7 +81,7 @@ type ViewStory struct {
 	IsRead      bool
 }
 
-func createViewData(digest pkg.Digest, storyReadMap map[int]bool) ViewData {
+func createViewData(digest models.Digest, storyReadMap map[int]bool) ViewData {
 	viewData := ViewData{
 		Weekday:     digest.Date.ToTime().Weekday().String(),
 		Month:       digest.Date.Month.String(),

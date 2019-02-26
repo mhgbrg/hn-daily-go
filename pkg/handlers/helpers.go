@@ -1,11 +1,16 @@
 package handlers
 
 import (
+	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 
+	"github.com/gorilla/sessions"
 	"github.com/pkg/errors"
 )
+
+var store = sessions.NewCookieStore([]byte("CHANGE-THIS-KEY-BEFORE-COMMITTING"))
 
 func GetUserID(w http.ResponseWriter, r *http.Request) (string, error) {
 	session, err := store.Get(r, "hndaily")
@@ -30,4 +35,9 @@ func generateUserID() string {
 		b[i] = userIDChars[rand.Intn(len(userIDChars))]
 	}
 	return string(b)
+}
+
+func ReturnError(w http.ResponseWriter, err error, code int) {
+	log.Printf("%+v\n", err)
+	http.Error(w, fmt.Sprintf("%+v", err), code)
 }
