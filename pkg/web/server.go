@@ -19,6 +19,7 @@ func StartServer() {
 	defer db.Close()
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/", Wrap(GetLatestDigest(db)))
 	mux.HandleFunc("/digest/", Wrap(GetDigest(db)))
 	mux.HandleFunc("/story/", Wrap(ReadStory(db)))
 	log.Fatal(

@@ -10,7 +10,7 @@ import (
 
 var store = sessions.NewCookieStore([]byte("CHANGE-THIS-KEY-BEFORE-COMMITTING"))
 
-func GetUserID(w http.ResponseWriter, r *http.Request) (string, error) {
+func GetOrSetUserID(w http.ResponseWriter, r *http.Request) (string, error) {
 	session, err := store.Get(r, "hndaily")
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get session \"hndaily\" from request")

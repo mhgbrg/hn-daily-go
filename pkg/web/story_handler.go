@@ -22,7 +22,7 @@ func ReadStory(db *sql.DB) CustomHandlerFunc {
 			return nil, NotFoundError(err)
 		}
 
-		userID, err := GetUserID(w, r)
+		userID, err := GetOrSetUserID(w, r)
 		if err != nil {
 			return nil, InternalServerError(err)
 		}
