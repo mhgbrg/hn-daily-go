@@ -59,7 +59,7 @@ func renderPage(db *sql.DB, w http.ResponseWriter, r *http.Request, digest model
 		return nil, InternalServerError(err)
 	}
 
-	viewData := createViewData(digest, storyReadMap)
+	viewData := createDigestViewData(digest, storyReadMap)
 	var responseBody bytes.Buffer
 	err = template.Execute(&responseBody, viewData)
 	if err != nil {
@@ -69,16 +69,17 @@ func renderPage(db *sql.DB, w http.ResponseWriter, r *http.Request, digest model
 	return &responseBody, nil
 }
 
-type ViewData struct {
+type digestViewData struct {
 	Year        int
 	Month       string
 	Day         int
 	Weekday     string
+	ArchiveURL  string
 	GeneratedAt time.Time
-	Stories     []ViewStory
+	Stories     []digestViewStory
 }
 
-type ViewStory struct {
+type digestViewStory struct {
 	Rank        int
 	Title       string
 	URL         string
@@ -89,18 +90,19 @@ type ViewStory struct {
 	IsRead      bool
 }
 
-func createViewData(digest models.Digest, storyReadMap map[int]bool) ViewData {
-	viewData := ViewData{
+func createDigestViewData(digest models.Digest, storyReadMap map[int]bool) digestViewData {
+	viewData := digestViewData{
 		Weekday:     digest.Date.ToTime().Weekday().String(),
 		Month:       digest.Date.Month.String(),
 		Day:         digest.Date.Day,
 		Year:        digest.Date.Year,
+		ArchiveURL:  fmt.Sprintf("/archive/%s", models.YearMonth{Year: digest.Date.Year, Month: digest.Date.Month}),
 		GeneratedAt: digest.GeneratedAt,
-		Stories:     make([]ViewStory, len(digest.Stories)),
+		Stories:     make([]digestViewStory, len(digest.Stories)),
 	}
 
 	for i, story := range digest.Stories {
-		viewStory := ViewStory{
+		viewStory := digestViewStory{
 			Rank:        i + 1,
 			Title:       story.Title,
 			URL:         fmt.Sprintf("/story/%d", story.ID),

@@ -43,6 +43,11 @@ func LoadDigest(db DbConn, date models.Date) (models.Digest, error) {
 }
 
 // TODO: Handle situation where no digest exists explicitly.
+func LoadFirstDigest(db DbConn) (models.Digest, error) {
+	return loadDigest(db, "ORDER BY date ASC, generated_at DESC")
+}
+
+// TODO: Handle situation where no digest exists explicitly.
 func LoadLatestDigest(db DbConn) (models.Digest, error) {
 	return loadDigest(db, "ORDER BY date DESC, generated_at DESC")
 }
@@ -101,4 +106,34 @@ func scanDigest(s scannable) (models.Digest, error) {
 		return models.Digest{}, errors.Wrap(err, "scan from scannable to digest failed")
 	}
 	return digest, nil
+}
+
+func LoadDatesWithDigests(db DbConn, yearMonth models.YearMonth) ([]models.Date, error) {
+	rows, err := db.Query(
+		`SELECT DISTINCT
+			date
+		FROM
+			digest
+		WHERE
+			EXTRACT(YEAR FROM date) = $1
+			AND EXTRACT(MONTH FROM date) = $2
+		`,
+		yearMonth.Year,
+		yearMonth.Month,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "select query for table `digest` failed")
+	}
+
+	dates := make([]models.Date, 0)
+	for rows.Next() {
+		var date models.Date
+		err := rows.Scan(&date)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to scan row into date")
+		}
+		dates = append(dates, date)
+	}
+
+	return dates, nil
 }

@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"fmt"
 	templatelib "html/template"
 
@@ -28,4 +29,19 @@ func GetTemplate(name string) (*templatelib.Template, error) {
 	cache[name] = template
 
 	return template, nil
+}
+
+func RenderTemplate(name string, data interface{}) (fmt.Stringer, error) {
+	template, err := GetTemplate(name)
+	if err != nil {
+		return nil, err
+	}
+
+	var rendered bytes.Buffer
+	err = template.Execute(&rendered, data)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to render template %s", name)
+	}
+
+	return &rendered, nil
 }

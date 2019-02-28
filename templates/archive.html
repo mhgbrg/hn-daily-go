@@ -1,0 +1,149 @@
+<!DOCTYPE HTML>
+
+<html>
+  <head>
+    <title>Hacker News Daily - Archive {{.Month}}, {{.Year}}</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=575" />
+    <!-- TODO: Install reset.css with npm and include it locally instead of sourcing from a cdn. -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.css" />
+    <style>
+      /* TODO: Install font with npm and include it locally instead of sourcing from google. */
+      @import url('https://fonts.googleapis.com/css?family=Roboto+Slab:300,400|Roboto:300');
+
+      :root {
+        --off-black: #323232;
+        --font-weight-light: 300;
+        --font-weight-normal: 400;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 50px 10px;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+
+      a {
+        color: #4d98ce;
+      }
+
+      /* --- HEADER --- */
+      header {
+        text-align: center;
+        font-family: 'Roboto Slab', serif;
+      }
+
+      header > * {
+        font-weight: var(--font-weight-light);
+        color: var(--off-black);
+      }
+
+      header > h1 {
+        font-size: 50px;
+        margin-bottom: 10px;
+      }
+
+      header > h1 > a {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      header > p {
+        font-size: 28px;
+      }
+
+      /* --- MONTH-SELECTOR --- */
+      .year-month-selector {
+        margin-top: 50px;
+        margin-bottom: 25px;
+        display: flex;
+        font-family: 'Roboto Slab', serif;
+        font-size: 28px;
+        font-weight: var(--font-weight-light);
+      }
+
+      .year-month {
+        width: 300px;
+        text-align: center;
+      }
+
+      .icon-wrapper {
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        align-items: center;
+      }
+
+      .left-icon, .right-icon {
+        --icon-size: 8px;
+        content: '';
+        width: var(--icon-size) !important;
+        height: var(--icon-size) !important;
+        transform: rotate(-45deg);
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .left-icon {
+        border-left: solid 1px currentColor;
+        border-top: solid 1px currentColor;
+      }
+
+      .right-icon {
+        border-bottom: solid 1px currentColor;
+        border-right: solid 1px currentColor;
+      }
+
+      /* --- DATES --- */
+      .dates {
+        font-family: 'Roboto Slab', serif;
+        font-size: 22px;
+        font-weight: var(--font-weight-light);
+        color: #df4242;
+      }
+
+      .date {
+        margin-top: 16px;
+      }
+
+      .date a {
+        color: inherit;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1><a href="/">Hacker News Daily</a></h1>
+      <p>Archive</p>
+    </header>
+    <div class="year-month-selector">
+      {{if .PrevMonthURL}}
+        <a href="{{.PrevMonthURL}}" class="prev-month icon-wrapper">
+          <div class="left-icon">&nbsp;</div>
+        </a>
+      {{else}}
+        <div></div>
+      {{end}}
+      <p class="year-month">{{.Month}} {{.Year}}</p>
+      {{if .NextMonthURL}}
+        <a href="{{.NextMonthURL}}" class="next-month icon-wrapper">
+          <div class="right-icon">&nbsp;</div>
+        </a>
+      {{else}}
+        <div></div>
+      {{end}}
+    </div>
+    <div class="dates">
+      {{range .Dates}}
+        <p class="date">
+          <a href="{{.DigestURL}}">{{.Date}}</a>
+        </p>
+      {{end}}
+    </div>
+  </body>
+</html>

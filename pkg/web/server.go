@@ -22,6 +22,7 @@ func StartServer() {
 	mux.HandleFunc("/", Wrap(GetLatestDigest(db)))
 	mux.HandleFunc("/digest/", Wrap(GetDigest(db)))
 	mux.HandleFunc("/story/", Wrap(ReadStory(db)))
+	mux.HandleFunc("/archive/", Wrap(Archive(db)))
 	log.Fatal(
 		http.ListenAndServe(
 			"localhost:8080",

@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -20,4 +21,19 @@ func NotFoundError(err error) HTTPError {
 
 func InternalServerError(err error) HTTPError {
 	return HTTPError{err, http.StatusInternalServerError}
+}
+
+func HandleError(err error, w http.ResponseWriter, r *http.Request) {
+	log.Printf("%+v", err)
+	switch err := err.(type) {
+	case HTTPError:
+		switch err.Code {
+		case 404:
+			http.NotFound(w, r)
+		default:
+			http.Error(w, err.Error(), err.Code)
+		}
+	default:
+		http.Error(w, err.Error(), 500)
+	}
 }
