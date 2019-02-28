@@ -1,6 +1,8 @@
 package repo
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type DbConn interface {
 	Query(query string, args ...interface{}) (*sql.Rows, error)

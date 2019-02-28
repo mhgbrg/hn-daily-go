@@ -1,11 +1,10 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"os"
 
-	_ "github.com/lib/pq" // load PSQL driver
+	"github.com/mhgbrg/hndaily/cmd/cmdutils"
 	"github.com/mhgbrg/hndaily/pkg"
 	"github.com/mhgbrg/hndaily/pkg/models"
 	"github.com/mhgbrg/hndaily/pkg/repo"
@@ -54,11 +53,7 @@ func digestSingleDate(date models.Date) error {
 }
 
 func digestDateRange(startDate, endDate models.Date) error {
-	// TODO: Read database info from environment.
-	db, err := sql.Open("postgres", "user=hndaily dbname=hndaily sslmode=disable")
-	if err != nil {
-		return errors.Wrap(err, "failed to open connection to database")
-	}
+	db := cmdutils.ConnectToDB()
 	defer db.Close()
 
 	for date := startDate; date != endDate.Next(); date = date.Next() {

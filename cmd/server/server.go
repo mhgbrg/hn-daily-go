@@ -1,7 +1,14 @@
 package main
 
-import "github.com/mhgbrg/hndaily/pkg/web"
+import (
+	"log"
+
+	"github.com/mhgbrg/hndaily/cmd/cmdutils"
+	"github.com/mhgbrg/hndaily/pkg/web"
+)
 
 func main() {
-	web.StartServer()
+	db := cmdutils.ConnectToDB()
+	defer db.Close()
+	log.Fatal(web.StartServer(db))
 }
