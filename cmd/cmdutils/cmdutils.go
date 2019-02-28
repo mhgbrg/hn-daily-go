@@ -11,19 +11,19 @@ import (
 )
 
 func ConnectToDB() *sql.DB {
-	connectionString := os.Getenv("DB_CONNECTION_STRING")
-	if connectionString == "" {
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
 		log.Fatal(errors.New("failed to read database connection string from environment variable DB_URL"))
 	}
 
-	db, err := sql.Open("postgres", connectionString)
+	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
-		log.Fatal(errors.Wrapf(err, "failed to open connection to database at %s", connectionString))
+		log.Fatal(errors.Wrapf(err, "failed to open connection to database at %s", databaseURL))
 	}
 
 	err = db.Ping()
 	if err != nil {
-		log.Fatal(errors.Wrapf(err, "failed to ping database at %s", connectionString))
+		log.Fatal(errors.Wrapf(err, "failed to ping database at %s", databaseURL))
 	}
 
 	return db
