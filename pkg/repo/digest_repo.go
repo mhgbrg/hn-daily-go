@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/mhgbrg/hndaily/pkg/models"
@@ -37,24 +38,25 @@ func insertDigestRow(db DbConn, digest models.Digest) (int, error) {
 	return id, nil
 }
 
-// TODO: Handle situation where no digest exists for date explicitly.
 func LoadDigest(db DbConn, date models.Date) (models.Digest, error) {
 	return loadDigest(db, "WHERE date = $1 ORDER BY generated_at DESC", date.ToTime())
 }
 
-// TODO: Handle situation where no digest exists explicitly.
 func LoadFirstDigest(db DbConn) (models.Digest, error) {
 	return loadDigest(db, "ORDER BY date ASC, generated_at DESC")
 }
 
-// TODO: Handle situation where no digest exists explicitly.
 func LoadLatestDigest(db DbConn) (models.Digest, error) {
 	return loadDigest(db, "ORDER BY date DESC, generated_at DESC")
 }
 
+var DigestNotFoundError = errors.New("digest not found")
+
 func loadDigest(db DbConn, filter string, args ...interface{}) (models.Digest, error) {
 	digest, err := loadDigestRow(db, filter, args...)
-	if err != nil {
+	if err == DigestNotFoundError {
+		return models.Digest{}, err
+	} else if err != nil {
 		return models.Digest{}, errors.WithMessage(err, "failed to load digest row")
 	}
 
@@ -86,8 +88,10 @@ func loadDigestRow(db DbConn, filter string, args ...interface{}) (models.Digest
 		args...,
 	)
 	digest, err := scanDigest(row)
-	if err != nil {
-		return models.Digest{}, errors.WithMessage(err, "select query for table `digest` failed")
+	if err == sql.ErrNoRows {
+		return models.Digest{}, DigestNotFoundError
+	} else if err != nil {
+		return models.Digest{}, errors.Wrap(err, "select query for table `digest` failed")
 	}
 
 	return digest, nil
@@ -102,10 +106,7 @@ func scanDigest(s scannable) (models.Digest, error) {
 		&digest.EndTime,
 		&digest.GeneratedAt,
 	)
-	if err != nil {
-		return models.Digest{}, errors.Wrap(err, "scan from scannable to digest failed")
-	}
-	return digest, nil
+	return digest, err
 }
 
 func LoadDatesWithDigests(db DbConn, yearMonth models.YearMonth) ([]models.Date, error) {

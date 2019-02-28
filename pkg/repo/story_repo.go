@@ -1,6 +1,8 @@
 package repo
 
 import (
+	"database/sql"
+
 	"github.com/mhgbrg/hndaily/pkg/models"
 	"github.com/pkg/errors"
 )
@@ -37,6 +39,8 @@ func InsertStories(db DbConn, digestID int, stories []models.Story) ([]int, erro
 	return ids, nil
 }
 
+var StoryNotFoundError = errors.New("story not found")
+
 func LoadStory(db DbConn, id int) (models.Story, error) {
 	var story models.Story
 	row := db.QueryRow(
@@ -56,10 +60,11 @@ func LoadStory(db DbConn, id int) (models.Story, error) {
 		id,
 	)
 	story, err := scanStory(row)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return models.Story{}, StoryNotFoundError
+	} else if err != nil {
 		return models.Story{}, errors.Wrap(err, "select query on table `story` failed")
 	}
-
 	return story, nil
 }
 
@@ -113,8 +118,5 @@ func scanStory(s scannable) (models.Story, error) {
 		&story.Points,
 		&story.NumComments,
 	)
-	if err != nil {
-		return models.Story{}, errors.Wrap(err, "scan from scannable to story failed")
-	}
-	return story, nil
+	return story, err
 }

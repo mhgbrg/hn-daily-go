@@ -20,7 +20,9 @@ func GetDigest(db *sql.DB) CustomHandlerFunc {
 		}
 
 		digest, err := repo.LoadDigest(db, date)
-		if err != nil {
+		if err == repo.DigestNotFoundError {
+			return nil, NotFoundError(err)
+		} else if err != nil {
 			return nil, InternalServerError(err)
 		}
 

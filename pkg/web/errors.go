@@ -31,9 +31,9 @@ func HandleError(err error, w http.ResponseWriter, r *http.Request) {
 		case 404:
 			http.NotFound(w, r)
 		default:
-			http.Error(w, err.Error(), err.Code)
+			http.Error(w, "internal server error", 500)
 		}
 	default:
-		http.Error(w, err.Error(), 500)
+		http.Error(w, "internal server error", 500)
 	}
 }
