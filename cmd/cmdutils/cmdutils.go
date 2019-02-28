@@ -13,7 +13,7 @@ import (
 func ConnectToDB() *sql.DB {
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
-		log.Fatal(errors.New("failed to read database connection string from environment variable DB_URL"))
+		log.Fatal(errors.New("failed to read database connection string from environment variable DATABASE_URL"))
 	}
 
 	db, err := sql.Open("postgres", databaseURL)
