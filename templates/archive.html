@@ -76,6 +76,8 @@
         color: inherit;
         display: flex;
         align-items: center;
+        user-select: none;
+        width: 9px;
       }
 
       .left-icon, .right-icon {
@@ -127,7 +129,7 @@
           <div class="left-icon">&nbsp;</div>
         </a>
       {{else}}
-        <div></div>
+        <div class="icon-wrapper"></div>
       {{end}}
       <p class="year-month">{{.Month}} {{.Year}}</p>
       {{if .NextMonthURL}}
@@ -135,7 +137,7 @@
           <div class="right-icon">&nbsp;</div>
         </a>
       {{else}}
-        <div></div>
+        <div class="icon-wrapper"></div>
       {{end}}
     </div>
     <div class="dates">

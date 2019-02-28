@@ -19,6 +19,13 @@ func (date Date) ToTime() time.Time {
 	return time.Date(date.Year, date.Month, date.Day, 0, 0, 0, 0, time.UTC)
 }
 
+func (date Date) ToYearMonth() YearMonth {
+	return YearMonth{
+		Year:  date.Year,
+		Month: date.Month,
+	}
+}
+
 func (date Date) Next() Date {
 	t := date.ToTime()
 	t = t.AddDate(0, 0, 1)

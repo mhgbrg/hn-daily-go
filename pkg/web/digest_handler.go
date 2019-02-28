@@ -91,29 +91,27 @@ type digestViewStory struct {
 }
 
 func createDigestViewData(digest models.Digest, storyReadMap map[int]bool) digestViewData {
-	viewData := digestViewData{
+	viewStories := make([]digestViewStory, len(digest.Stories))
+	for i, story := range digest.Stories {
+		viewStories[i] = digestViewStory{
+			Rank:        i + 1,
+			Title:       story.Title,
+			URL:         StoryURL(story.ID),
+			Site:        story.URL.Hostname(),
+			Points:      story.Points,
+			NumComments: story.NumComments,
+			CommentsURL: CommentsURL(story.ExternalID),
+			IsRead:      storyReadMap[story.ID],
+		}
+	}
+
+	return digestViewData{
 		Weekday:     digest.Date.ToTime().Weekday().String(),
 		Month:       digest.Date.Month.String(),
 		Day:         digest.Date.Day,
 		Year:        digest.Date.Year,
-		ArchiveURL:  fmt.Sprintf("/archive/%s", models.YearMonth{Year: digest.Date.Year, Month: digest.Date.Month}),
+		ArchiveURL:  ArchiveURL(digest.Date.ToYearMonth()),
 		GeneratedAt: digest.GeneratedAt,
-		Stories:     make([]digestViewStory, len(digest.Stories)),
+		Stories:     viewStories,
 	}
-
-	for i, story := range digest.Stories {
-		viewStory := digestViewStory{
-			Rank:        i + 1,
-			Title:       story.Title,
-			URL:         fmt.Sprintf("/story/%d", story.ID),
-			Site:        story.URL.Hostname(),
-			Points:      story.Points,
-			NumComments: story.NumComments,
-			CommentsURL: fmt.Sprintf("https://news.ycombinator.com/item?id=%d", story.ExternalID),
-			IsRead:      storyReadMap[story.ID],
-		}
-		viewData.Stories[i] = viewStory
-	}
-
-	return viewData
 }

@@ -36,8 +36,8 @@ func Archive(db *sql.DB) CustomHandlerFunc {
 			return nil, InternalServerError(err)
 		}
 
-		firstYearMonth := models.YearMonth{Year: firstDigest.Date.Year, Month: firstDigest.Date.Month}
-		lastYearMonth := models.YearMonth{Year: lastDigest.Date.Year, Month: lastDigest.Date.Month}
+		firstYearMonth := firstDigest.Date.ToYearMonth()
+		lastYearMonth := lastDigest.Date.ToYearMonth()
 
 		viewData := createArchiveViewData(yearMonth, dates, firstYearMonth, lastYearMonth)
 		if err != nil {
@@ -69,15 +69,20 @@ type archiveViewDate struct {
 func createArchiveViewData(yearMonth models.YearMonth, dates []models.Date, firstYearMonth, lastYearMonth models.YearMonth) archiveViewData {
 	viewDates := make([]archiveViewDate, len(dates))
 	for i, date := range dates {
-		viewDates[i] = archiveViewDate{date.String(), fmt.Sprintf("/digest/%s", date)}
+		viewDates[i] = archiveViewDate{
+			Date:      date.String(),
+			DigestURL: DigestURL(date),
+		}
 	}
-	prevMonthURL := fmt.Sprintf("/archive/%s", yearMonth.PrevMonth())
-	nextMonthURL := fmt.Sprintf("/archive/%s", yearMonth.NextMonth())
+
+	prevMonthURL := ArchiveURL(yearMonth.PrevMonth())
+	nextMonthURL := ArchiveURL(yearMonth.NextMonth())
 	if yearMonth == firstYearMonth {
 		prevMonthURL = ""
 	} else if yearMonth == lastYearMonth {
 		nextMonthURL = ""
 	}
+
 	return archiveViewData{
 		Year:         yearMonth.Year,
 		Month:        yearMonth.Month.String(),
