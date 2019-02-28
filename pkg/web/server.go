@@ -16,7 +16,7 @@ func StartServer(port int, db *sql.DB) error {
 	mux.HandleFunc("/story/", Wrap(ReadStory(db)))
 	mux.HandleFunc("/archive/", Wrap(Archive(db)))
 	return http.ListenAndServe(
-		fmt.Sprintf("localhost:%d", port),
+		fmt.Sprintf(":%d", port),
 		handlers.LoggingHandler(os.Stdout, mux),
 	)
 }
