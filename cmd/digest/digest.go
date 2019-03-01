@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/mhgbrg/hndaily/cmd/cmdutils"
 	"github.com/mhgbrg/hndaily/pkg"
 	"github.com/mhgbrg/hndaily/pkg/models"
 	"github.com/mhgbrg/hndaily/pkg/repo"
@@ -53,8 +52,12 @@ func digestSingleDate(date models.Date) error {
 }
 
 func digestDateRange(startDate, endDate models.Date) error {
-	db := cmdutils.ConnectToDB()
+	databaseURL := os.Getenv("DATABASE_URL")
+	db, err := repo.ConnectToDB(databaseURL)
 	defer db.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for date := startDate; date != endDate.Next(); date = date.Next() {
 		log.Printf("digesting %s\n", date)

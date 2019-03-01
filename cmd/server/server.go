@@ -1,24 +1,25 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
-	"strconv"
 
-	"github.com/mhgbrg/hndaily/cmd/cmdutils"
+	"github.com/mhgbrg/hndaily/pkg/repo"
 	"github.com/mhgbrg/hndaily/pkg/web"
-	"github.com/pkg/errors"
 )
 
 func main() {
-	portStr := os.Getenv("PORT")
-	port, err := strconv.Atoi(portStr)
+	hostname := os.Getenv("HOSTNAME")
+	port := os.Getenv("PORT")
+	serverAddr := fmt.Sprintf("%s:%s", hostname, port)
+
+	dbURL := os.Getenv("DATABASE_URL")
+	db, err := repo.ConnectToDB(dbURL)
+	defer db.Close()
 	if err != nil {
-		log.Fatal(errors.Wrapf(err, "failed to parse port %s", portStr))
+		log.Fatal(err)
 	}
 
-	db := cmdutils.ConnectToDB()
-	defer db.Close()
-
-	log.Fatal(web.StartServer(port, db))
+	log.Fatal(web.StartServer(serverAddr, db))
 }
