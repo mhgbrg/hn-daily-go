@@ -1,3 +1,5 @@
+apply_migrations
+!apply_migrations/
 digest
 !digest/
 server
