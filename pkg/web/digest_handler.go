@@ -1,49 +1,49 @@
 package web
 
 import (
-	"bytes"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"time"
+
+	templatelib "html/template"
 
 	"github.com/mhgbrg/hndaily/pkg/models"
 	"github.com/mhgbrg/hndaily/pkg/repo"
 )
 
-func GetDigest(db *sql.DB) CustomHandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) (fmt.Stringer, error) {
+func GetDigest(templates *Templates, db *sql.DB) CustomHandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) error {
 		dateStr := r.URL.Path[len("/digest/"):]
 		date, err := models.ParseDate(dateStr)
 		if err != nil {
-			return nil, NotFoundError(err)
+			return NotFoundError(err)
 		}
 
 		digest, err := repo.LoadDigest(db, date)
 		if err == repo.DigestNotFoundError {
-			return nil, NotFoundError(err)
+			return NotFoundError(err)
 		} else if err != nil {
-			return nil, InternalServerError(err)
+			return InternalServerError(err)
 		}
 
-		return renderPage(db, w, r, digest)
+		return renderPage(templates.Digest, db, w, r, digest)
 	}
 }
 
-func GetLatestDigest(db *sql.DB) CustomHandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) (fmt.Stringer, error) {
+func GetLatestDigest(templates *Templates, db *sql.DB) CustomHandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) error {
 		digest, err := repo.LoadLatestDigest(db)
 		if err != nil {
-			return nil, InternalServerError(err)
+			return InternalServerError(err)
 		}
-		return renderPage(db, w, r, digest)
+		return renderPage(templates.Digest, db, w, r, digest)
 	}
 }
 
-func renderPage(db *sql.DB, w http.ResponseWriter, r *http.Request, digest models.Digest) (fmt.Stringer, error) {
+func renderPage(template *templatelib.Template, db *sql.DB, w http.ResponseWriter, r *http.Request, digest models.Digest) error {
 	userID, err := GetOrSetUserID(w, r)
 	if err != nil {
-		return nil, InternalServerError(err)
+		return InternalServerError(err)
 	}
 
 	storyIDs := make([]int, len(digest.Stories))
@@ -53,22 +53,16 @@ func renderPage(db *sql.DB, w http.ResponseWriter, r *http.Request, digest model
 
 	storyReadMap, err := repo.HasReadStories(db, userID, storyIDs)
 	if err != nil {
-		return nil, InternalServerError(err)
-	}
-
-	template, err := GetTemplate("digest")
-	if err != nil {
-		return nil, InternalServerError(err)
+		return InternalServerError(err)
 	}
 
 	viewData := createDigestViewData(digest, storyReadMap)
-	var responseBody bytes.Buffer
-	err = template.Execute(&responseBody, viewData)
+	err = template.Execute(w, viewData)
 	if err != nil {
-		return nil, InternalServerError(err)
+		return InternalServerError(err)
 	}
 
-	return &responseBody, nil
+	return nil
 }
 
 type digestViewData struct {

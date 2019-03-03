@@ -1,47 +1,39 @@
 package web
 
 import (
-	"bytes"
 	"fmt"
 	templatelib "html/template"
 
 	"github.com/pkg/errors"
 )
 
-var cache map[string]*templatelib.Template
+type Templates struct {
+	Digest  *templatelib.Template
+	Archive *templatelib.Template
+}
 
-// TODO: Read templates when server is loaded instead of doing it lazily.
-func GetTemplate(name string) (*templatelib.Template, error) {
-	if cache == nil {
-		cache = make(map[string]*templatelib.Template)
+func LoadTemplates() (*Templates, error) {
+	digestTemplate, err := loadTemplate("digest")
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to load digest template")
 	}
 
-	if template, ok := cache[name]; ok {
-		return template, nil
+	archiveTemplate, err := loadTemplate("archive")
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to load archive template")
 	}
 
+	return &Templates{
+		Digest:  digestTemplate,
+		Archive: archiveTemplate,
+	}, nil
+}
+
+func loadTemplate(name string) (*templatelib.Template, error) {
 	filename := fmt.Sprintf("templates/%s.html", name)
 	template, err := templatelib.ParseFiles(filename)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse template %s (%s)", name, filename)
 	}
-
-	cache[name] = template
-
 	return template, nil
-}
-
-func RenderTemplate(name string, data interface{}) (fmt.Stringer, error) {
-	template, err := GetTemplate(name)
-	if err != nil {
-		return nil, err
-	}
-
-	var rendered bytes.Buffer
-	err = template.Execute(&rendered, data)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to render template %s", name)
-	}
-
-	return &rendered, nil
 }

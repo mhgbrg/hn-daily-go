@@ -2,7 +2,6 @@ package web
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -11,45 +10,41 @@ import (
 	"github.com/mhgbrg/hndaily/pkg/repo"
 )
 
-func Archive(db *sql.DB) CustomHandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) (fmt.Stringer, error) {
+func Archive(templates *Templates, db *sql.DB) CustomHandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) error {
 		yearMonthStr := r.URL.Path[len("/archive/"):]
 		yearMonth, err := models.ParseYearMonth(yearMonthStr)
 		if err != nil {
-			return nil, NotFoundError(err)
+			return NotFoundError(err)
 		}
 
 		dates, err := repo.LoadDatesWithDigests(db, yearMonth)
 		if err != nil {
-			return nil, InternalServerError(err)
+			return InternalServerError(err)
 		}
 		if len(dates) == 0 {
-			return nil, NotFoundError(errors.New("no digest for month"))
+			return NotFoundError(errors.New("no digest for month"))
 		}
 
 		firstDigest, err := repo.LoadFirstDigest(db)
 		if err != nil {
-			return nil, InternalServerError(err)
+			return InternalServerError(err)
 		}
 		lastDigest, err := repo.LoadLatestDigest(db)
 		if err != nil {
-			return nil, InternalServerError(err)
+			return InternalServerError(err)
 		}
 
 		firstYearMonth := firstDigest.Date.ToYearMonth()
 		lastYearMonth := lastDigest.Date.ToYearMonth()
 
 		viewData := createArchiveViewData(yearMonth, dates, firstYearMonth, lastYearMonth)
+		err = templates.Archive.Execute(w, viewData)
 		if err != nil {
-			return nil, InternalServerError(err)
+			return InternalServerError(err)
 		}
 
-		responseBody, err := RenderTemplate("archive", viewData)
-		if err != nil {
-			return nil, InternalServerError(err)
-		}
-
-		return responseBody, nil
+		return nil
 	}
 }
 
