@@ -3,6 +3,7 @@ package repo
 import (
 	"database/sql"
 
+	"github.com/lib/pq"
 	"github.com/mhgbrg/hndaily/pkg/models"
 	"github.com/pkg/errors"
 )
@@ -88,9 +89,48 @@ func LoadStoriesForDigest(db DbConn, digestID int) ([]models.Story, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "select query for table `story` failed")
 	}
-	defer rows.Close()
 
+	stories, err := scanStories(rows)
+	if err != nil {
+		return []models.Story{}, errors.WithMessage(err, "failed to scan stories from result")
+	}
+
+	return stories, nil
+}
+
+func LoadStoriesByExternalID(db DbConn, externalIDs []int) ([]models.Story, error) {
+	rows, err := db.Query(
+		`SELECT
+			id,
+			external_id,
+			posted_at,
+			title,
+			url,
+			author,
+			points,
+			num_comments
+		FROM
+			story
+		WHERE
+			external_id = ANY($1)`,
+		pq.Array(externalIDs),
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "select query for table `story` failed")
+	}
+
+	stories, err := scanStories(rows)
+	if err != nil {
+		return []models.Story{}, errors.WithMessage(err, "failed to scan stories from result")
+	}
+
+	return stories, nil
+}
+
+func scanStories(rows *sql.Rows) ([]models.Story, error) {
 	stories := make([]models.Story, 0)
+
+	defer rows.Close()
 	for rows.Next() {
 		story, err := scanStory(rows)
 		if err != nil {

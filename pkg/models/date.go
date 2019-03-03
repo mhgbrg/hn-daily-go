@@ -26,6 +26,12 @@ func (date Date) ToYearMonth() YearMonth {
 	}
 }
 
+func (date Date) Prev() Date {
+	t := date.ToTime()
+	t = t.AddDate(0, 0, 1)
+	return FromTime(t)
+}
+
 func (date Date) Next() Date {
 	t := date.ToTime()
 	t = t.AddDate(0, 0, 1)

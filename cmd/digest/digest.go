@@ -4,11 +4,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/mhgbrg/hndaily/pkg"
+	"github.com/mhgbrg/hndaily/pkg/digester"
 	"github.com/mhgbrg/hndaily/pkg/models"
 	"github.com/mhgbrg/hndaily/pkg/repo"
-
-	"github.com/pkg/errors"
 )
 
 const storiesPerDigest = 10
@@ -61,26 +59,9 @@ func digestDateRange(startDate, endDate models.Date) error {
 
 	for date := startDate; date != endDate.Next(); date = date.Next() {
 		log.Printf("digesting %s\n", date)
-
-		d, err := pkg.FetchDigest(date, storiesPerDigest)
+		err := digester.Digest(db, date)
 		if err != nil {
-			return errors.WithMessagef(err, "failed to fetch digest for date %s", date)
-		}
-
-		tx, err := db.Begin()
-		if err != nil {
-			return errors.Wrap(err, "failed to open db transaction")
-		}
-
-		if err = repo.SaveDigest(tx, d); err != nil {
-			if err2 := tx.Rollback(); err2 != nil {
-				return errors.Wrap(err2, "failed to rollback transaction")
-			}
-			return errors.WithMessagef(err, "failed to save digest for date %s, rolled back transaction", date)
-		}
-
-		if err := tx.Commit(); err != nil {
-			return errors.Wrap(err, "failed to commit transaction")
+			log.Fatal(err)
 		}
 	}
 
