@@ -24,12 +24,10 @@ func SaveDigest(db DbConn, digest models.Digest) error {
 func insertDigestRow(db DbConn, digest models.Digest) (int, error) {
 	var id int
 	err := db.QueryRow(
-		`INSERT INTO digest(date, start_time, end_time, generated_at)
-		VALUES ($1, $2, $3, $4)
+		`INSERT INTO digest(date, generated_at)
+		VALUES ($1, $2)
 		RETURNING id`,
 		digest.Date.ToTime(),
-		digest.StartTime,
-		digest.EndTime,
 		digest.GeneratedAt,
 	).Scan(&id)
 	if err != nil {
@@ -76,8 +74,6 @@ func loadDigestRow(db DbConn, filter string, args ...interface{}) (models.Digest
 			`SELECT
 				id,
 				date,
-				start_time,
-				end_time,
 				generated_at
 			FROM
 				digest
@@ -102,8 +98,6 @@ func scanDigest(s scannable) (models.Digest, error) {
 	err := s.Scan(
 		&digest.ID,
 		&digest.Date,
-		&digest.StartTime,
-		&digest.EndTime,
 		&digest.GeneratedAt,
 	)
 	return digest, err
@@ -117,8 +111,7 @@ func LoadDatesWithDigests(db DbConn, yearMonth models.YearMonth) ([]models.Date,
 			digest
 		WHERE
 			EXTRACT(YEAR FROM date) = $1
-			AND EXTRACT(MONTH FROM date) = $2
-		`,
+			AND EXTRACT(MONTH FROM date) = $2`,
 		yearMonth.Year,
 		yearMonth.Month,
 	)
