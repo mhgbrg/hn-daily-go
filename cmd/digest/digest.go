@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/mhgbrg/hndaily/pkg/digester"
 	"github.com/mhgbrg/hndaily/pkg/models"
@@ -13,19 +14,19 @@ const storiesPerDigest = 10
 
 func main() {
 	args := os.Args[1:]
-	if len(args) < 1 || len(args) > 2 {
-		log.Fatal("usage: ./digest <date> | <start_date> <end_date>")
+	if len(args) > 2 {
+		log.Fatal("usage: ./digest [<date> | <start_date> <end_date>]")
 	}
-	if len(args) == 1 {
+	var digestErr error
+	if len(args) == 0 {
+		digestErr = digestToday()
+	} else if len(args) == 1 {
 		dateStr := args[0]
 		date, err := models.ParseDate(dateStr)
 		if err != nil {
 			log.Fatalf("%+v", err)
 		}
-		err = digestSingleDate(date)
-		if err != nil {
-			log.Fatalf("%+v", err)
-		}
+		digestErr = digestSingleDate(date)
 	} else if len(args) == 2 {
 		startDateStr := args[0]
 		endDateStr := args[1]
@@ -37,12 +38,18 @@ func main() {
 		if err != nil {
 			log.Fatalf("%+v", err)
 		}
-		err = digestDateRange(startDate, endDate)
-		if err != nil {
-			log.Fatalf("%+v", err)
-		}
+		digestErr = digestDateRange(startDate, endDate)
+	}
+	if digestErr != nil {
+		log.Fatalf("%+v", digestErr)
 	}
 	log.Print("done!")
+}
+
+func digestToday() error {
+	now := time.Now()
+	today := models.FromTime(now)
+	return digestSingleDate(today)
 }
 
 func digestSingleDate(date models.Date) error {
