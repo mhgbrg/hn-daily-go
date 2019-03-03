@@ -18,7 +18,11 @@ func main() {
 		dbURL,
 	)
 	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to create migrate instance"))
+	}
+	err = m.Up()
+	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to apply migrations"))
 	}
-	m.Up()
+	log.Print("applied migrations")
 }
