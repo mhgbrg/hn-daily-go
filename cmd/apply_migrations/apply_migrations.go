@@ -21,7 +21,7 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to create migrate instance"))
 	}
 	err = m.Up()
-	if err != nil {
+	if err != nil && err.Error() != "no change" {
 		log.Fatal(errors.Wrap(err, "failed to apply migrations"))
 	}
 	log.Print("applied migrations")
