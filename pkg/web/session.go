@@ -66,7 +66,9 @@ func (sessionStorage *SessionStorage) GetUser(r *http.Request) (models.User, err
 		return models.User{}, errors.Errorf("failed to cast value %v to string", sessionUserID)
 	}
 	user, err := repo.LoadUserByExternalID(sessionStorage.DB, externalUserID)
-	if err != nil {
+	if err == repo.ErrUserNotFound {
+		return models.User{}, ErrUserNotSet
+	} else if err != nil {
 		return models.User{}, errors.WithMessagef(err, "failed to load user with externalID=%s", externalUserID)
 	}
 	return user, nil
