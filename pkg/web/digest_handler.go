@@ -5,13 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	templatelib "html/template"
-
 	"github.com/mhgbrg/hndaily/pkg/models"
 	"github.com/mhgbrg/hndaily/pkg/repo"
 )
 
-func GetDigest(templates *Templates, db *sql.DB) CustomHandlerFunc {
+func GetDigest(templates *Templates, db *sql.DB, sessionStorage SessionStorage) CustomHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		dateStr := r.URL.Path[len("/digest/"):]
 		date, err := models.ParseDate(dateStr)
@@ -26,22 +24,54 @@ func GetDigest(templates *Templates, db *sql.DB) CustomHandlerFunc {
 			return InternalServerError(err)
 		}
 
-		return renderPage(templates.Digest, db, w, r, digest)
+		return renderPage(templates, db, sessionStorage, w, r, digest)
 	}
 }
 
-func GetLatestDigest(templates *Templates, db *sql.DB) CustomHandlerFunc {
+func GetLatestDigest(templates *Templates, db *sql.DB, sessionStorage SessionStorage) CustomHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		digest, err := repo.LoadLatestDigest(db)
 		if err != nil {
 			return InternalServerError(err)
 		}
-		return renderPage(templates.Digest, db, w, r, digest)
+		return renderPage(templates, db, sessionStorage, w, r, digest)
 	}
 }
 
-func renderPage(template *templatelib.Template, db *sql.DB, w http.ResponseWriter, r *http.Request, digest models.Digest) error {
-	userID, err := GetOrSetUserID(w, r)
+func ChangeUserID(templates *Templates, db *sql.DB, sessionStorage SessionStorage) CustomHandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		newExternalUserID := r.FormValue("userID")
+
+		user, err := repo.LoadUserByExternalID(db, newExternalUserID)
+		if err == repo.ErrUserNotFound {
+			sessionStorage.AddFlash(w, r, "Invalid device ID")
+			http.Redirect(w, r, "/", http.StatusFound)
+			return nil
+		} else if err != nil {
+			return InternalServerError(err)
+		}
+
+		err = sessionStorage.SetUser(w, r, user)
+		if err != nil {
+			return InternalServerError(err)
+		}
+
+		sessionStorage.AddFlash(w, r, "Device ID updated successfully!")
+		http.Redirect(w, r, "/", http.StatusFound)
+
+		return nil
+	}
+}
+
+func renderPage(
+	templates *Templates,
+	db *sql.DB,
+	sessionStorage SessionStorage,
+	w http.ResponseWriter,
+	r *http.Request,
+	digest models.Digest,
+) error {
+	user, err := GetOrSetUser(sessionStorage, w, r)
 	if err != nil {
 		return InternalServerError(err)
 	}
@@ -51,13 +81,19 @@ func renderPage(template *templatelib.Template, db *sql.DB, w http.ResponseWrite
 		storyIDs[i] = story.ID
 	}
 
-	storyReadMap, err := repo.HasReadStories(db, userID, storyIDs)
+	storyReadMap, err := repo.HasReadStories(db, user.ID, storyIDs)
 	if err != nil {
 		return InternalServerError(err)
 	}
 
-	viewData := createDigestViewData(digest, storyReadMap)
-	err = template.Execute(w, viewData)
+	flashes, err := sessionStorage.Flashes(w, r)
+	if err != nil {
+		return InternalServerError(err)
+	}
+
+	viewData := createDigestViewData(digest, storyReadMap, user, flashes)
+
+	err = templates.Digest.Execute(w, viewData)
 	if err != nil {
 		return InternalServerError(err)
 	}
@@ -73,6 +109,8 @@ type digestViewData struct {
 	ArchiveURL  string
 	GeneratedAt time.Time
 	Stories     []digestViewStory
+	UserID      string
+	Flashes     []string
 }
 
 type digestViewStory struct {
@@ -86,7 +124,12 @@ type digestViewStory struct {
 	IsRead      bool
 }
 
-func createDigestViewData(digest models.Digest, storyReadMap map[int]bool) digestViewData {
+func createDigestViewData(
+	digest models.Digest,
+	storyReadMap map[int]bool,
+	user models.User,
+	flashes []string,
+) digestViewData {
 	viewStories := make([]digestViewStory, len(digest.Stories))
 	for i, story := range digest.Stories {
 		viewStories[i] = digestViewStory{
@@ -109,5 +152,7 @@ func createDigestViewData(digest models.Digest, storyReadMap map[int]bool) diges
 		ArchiveURL:  ArchiveURL(digest.Date.ToYearMonth()),
 		GeneratedAt: digest.GeneratedAt,
 		Stories:     viewStories,
+		UserID:      user.ExternalID,
+		Flashes:     flashes,
 	}
 }

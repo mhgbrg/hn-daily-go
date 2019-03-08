@@ -43,7 +43,6 @@ func InsertStories(db DbConn, digestID int, stories []models.Story) ([]int, erro
 var StoryNotFoundError = errors.New("story not found")
 
 func LoadStory(db DbConn, id int) (models.Story, error) {
-	var story models.Story
 	row := db.QueryRow(
 		`SELECT
 			id,

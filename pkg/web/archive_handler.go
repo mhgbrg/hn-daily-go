@@ -61,7 +61,12 @@ type archiveViewDate struct {
 	DigestURL string
 }
 
-func createArchiveViewData(yearMonth models.YearMonth, dates []models.Date, firstYearMonth, lastYearMonth models.YearMonth) archiveViewData {
+func createArchiveViewData(
+	yearMonth models.YearMonth,
+	dates []models.Date,
+	firstYearMonth,
+	lastYearMonth models.YearMonth,
+) archiveViewData {
 	viewDates := make([]archiveViewDate, len(dates))
 	for i, date := range dates {
 		viewDates[i] = archiveViewDate{

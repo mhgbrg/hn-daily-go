@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=575" />
     <!-- TODO: Install reset.css with npm and include it locally instead of sourcing from a cdn. -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.css" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
     <style>
       /* TODO: Install font with npm and include it locally instead of sourcing from google. */
       @import url('https://fonts.googleapis.com/css?family=Roboto+Slab:300,400|Roboto:300');
@@ -22,7 +23,7 @@
         flex-direction: column;
         justify-content: space-between;
         align-items: center;
-        padding: 50px 10px;
+        padding: 10px 10px 50px 10px;
         min-height: 100vh;
         box-sizing: border-box;
       }
@@ -31,8 +32,28 @@
         color: #4d98ce;
       }
 
+      .wrapper {
+        max-width: 1200px;
+      }
+
+      /* --- FLASHES --- */
+      .flash {
+        background-color: #514c4c;
+        padding: 15px 25px;
+        font-family: "Roboto", serif;
+        color: white;
+        border-radius: 6px;
+        margin-bottom: 5px;
+      }
+
+      .remove-flash {
+        float: right;
+        cursor: pointer;
+      }
+
       /* --- HEADER --- */
       header {
+        margin-top: 50px;
         text-align: center;
         font-family: 'Roboto Slab', serif;
       }
@@ -58,7 +79,6 @@
 
       /* --- STORIES --- */
       .stories {
-        max-width: 1200px;
         margin-top: 50px;
         margin-bottom: 50px;
       }
@@ -128,7 +148,7 @@
         text-align: center;
       }
 
-      footer > p {
+      footer p {
         margin: 5px;
         font-weight: var(--font-weight-light);
         font-size: 12px;
@@ -136,44 +156,218 @@
         font-family: 'Roboto', sans-serif;
       }
 
-      footer > .name {
+      footer .name {
         margin-top: 15px;
       }
 
-      footer > .archive {
-        margin-bottom: 10px;
+      footer .archive {
+        margin-bottom: 40px;
         font-weight: var(--font-weight-light);
         font-size: 16px;
         color: #df4242;
         font-family: 'Roboto Slab', serif;
       }
 
-      footer > .archive a {
+      footer .archive a {
         text-decoration: none;
         color: inherit;
+      }
+
+      footer .unique-id {
+        /* margin-top: 50px; */
+        position: relative;
+      }
+
+      .unique-id .fa-copy {
+        margin-left: 2px;
+        cursor: pointer;
+      }
+
+      footer .user-id {
+        border-bottom: 1px dashed #D1D1D1;
+      }
+
+      footer .unique-id .enter-id span {
+        text-decoration: none;
+        color: #df4242;
+        cursor: pointer;
+      }
+
+      /* .tooltip {
+        width: 270px;
+        background-color: #514c4c;
+        padding: 10px 15px;
+        border-radius: 8px;
+        position: absolute;
+        left: 433px;
+        top: -67px;
+        opacity: 0;
+      }
+
+      .tooltip-text {
+        font-weight: var(--font-weight-light);
+        font-size: 12px;
+        color: white;
+        font-family: 'Roboto', serif;
+        line-height: 16px;
+      }
+
+      .tooltip-arrow {
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 8px solid #514c4c;
+        position: absolute;
+        left: 140px;
+        top: 52px;
+      } */
+
+      .tooltip {
+        background: #514c4c;
+        color: white;
+        width: 150px;
+        border-radius: 3px;
+        /* box-shadow: 0 0 2px rgba(0,0,0,0.5); */
+        padding: 10px;
+        text-align: center;
+        margin-bottom: 5px;
+        position: absolute;
+      }
+
+      .tooltip-arrow {
+        border-width: 5px 5px 0 5px;
+        border-color: #514c4c;
+        border-left-color: transparent;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        bottom: -5px;
+        left: calc(50% - 5px);
+        margin: 0 5px;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        position: absolute;
+      }
+
+      #user-id-input-container {
+        display: none;
+      }
+
+      #user-id-input {
+        width: 125px;
+      }
+
+      .generated-at {
+        margin-top: 40px;
       }
     </style>
   </head>
   <body>
-    <header>
-      <h1><a href="/">Hacker News Daily</a></h1>
-      <p>{{.Weekday}}, {{.Month}} {{.Day}}, {{.Year}}</p>
-    </header>
-    <div class="stories">
-      {{range .Stories}}
-        <div class="story">
-          <div class="rank-and-title">
-            <p class="rank">#{{.Rank}}</p>
-            <h2 class="title{{if .IsRead}} is-read{{end}}"><a href="{{.URL}}">{{.Title}}</a></h2>
-          </div>
-          <p class="meta-info">{{.Site}} &middot; {{.Points}} points &middot; <a href="{{.CommentsURL}}">{{.NumComments}} comments</a></p>
+    <div class="wrapper">
+      {{if .Flashes}}
+        <div class="flashes" id="flashes">
+          {{range .Flashes}}
+            <div class="flash">
+                {{.}}
+                <span class="remove-flash"><i class="fas fa-times"></i></span>
+            </div>
+          {{end}}
         </div>
       {{end}}
+      <header>
+        <h1><a href="/">Hacker News Daily</a></h1>
+        <p>{{.Weekday}}, {{.Month}} {{.Day}}, {{.Year}}</p>
+      </header>
+      <div class="stories">
+        {{range .Stories}}
+          <div class="story">
+            <div class="rank-and-title">
+              <p class="rank">#{{.Rank}}</p>
+              <h2 class="title{{if .IsRead}} is-read{{end}}"><a href="{{.URL}}">{{.Title}}</a></h2>
+            </div>
+            <p class="meta-info">{{.Site}} &middot; {{.Points}} points &middot; <a href="{{.CommentsURL}}">{{.NumComments}} comments</a></p>
+          </div>
+        {{end}}
+      </div>
+      <footer>
+        <p class="archive"><a href="{{.ArchiveURL}}">Archive</a></p>
+        <div class="unique-id">
+          <form id="user-id-form" action="/change-user-id" method="post">
+            <p>The unique ID of this device is
+              <span id="user-id-container"><span class="user-id" id="user-id">{{.UserID}}</span> <i class="far fa-copy" id="copy-user-id"></i></span>
+              <span id="user-id-input-container"><input id="user-id-input" name="userID" value="{{.UserID}}" /></span>
+            </p>
+            <p class="enter-id"><span id="enter-id">Enter ID from another device<span></p>
+          </form>
+        </div>
+        <p class="generated-at">Generated at {{.GeneratedAt}}</p>
+        <!-- TODO: Add link to Github -->
+      </footer>
     </div>
-    <footer>
-      <p class="archive"><a href="{{.ArchiveURL}}">Archive</a></p>
-      <p>Generated at {{.GeneratedAt}}</p>
-      <!-- TODO: Add link to Github -->
-    </footer>
+    <script src="https://unpkg.com/popper.js/dist/umd/popper.min.js"></script>
+    <script src="https://unpkg.com/tooltip.js/dist/umd/tooltip.min.js"></script>
+    <script>
+      const form = document.getElementById("user-id-form");
+      const userIdElem = document.getElementById("user-id");
+      const userIdContainer = document.getElementById("user-id-container");
+      const userIdInput = document.getElementById("user-id-input");
+      const userIdInputContainer = document.getElementById("user-id-input-container");
+
+      // const tooltip = document.getElementById("tooltip");
+      // userIdElem.addEventListener("mouseenter", () => {
+      //   tooltip.style.opacity = 1;
+      // });
+      // userIdElem.addEventListener("mouseleave", () => {
+      //   tooltip.style.opacity = 0;
+      // });
+
+      const copyUserId = document.getElementById("copy-user-id");
+      copyUserId.addEventListener("click", () => {
+        copyToClipboard(userIdElem.textContent);
+      });
+
+      let editMode = false;
+      const enterId = document.getElementById("enter-id");
+      enterId.addEventListener("click", () => {
+        if (!editMode) {
+          userIdContainer.style.display = "none";
+          userIdInputContainer.style.display = "inline-block";
+          enterId.innerHTML = "Done";
+        } else {
+          form.submit()
+        }
+        editMode = !editMode;
+      });
+
+      const removeFlashButtons = document.getElementsByClassName("remove-flash");
+      Array.from(removeFlashButtons).forEach(
+        button => button.addEventListener(
+          'click',
+          () => {
+            button.parentElement.style.display = 'none';
+          }
+        )
+      );
+
+      const tooltipInstance = new Tooltip(userIdElem, {
+        placement: "top",
+        title: "To sync your read/unread history between devices, copy this ID to all the devices you want to sync.",
+      });
+      tooltipInstance.show();
+
+      function copyToClipboard(str) {
+        // Borrowed from https://hackernoon.com/copying-text-to-clipboard-with-javascript-df4d4988697f
+        const el = document.createElement('textarea');
+        el.value = str;
+        el.setAttribute('readonly', '');
+        el.style.position = 'absolute';
+        el.style.left = '-9999px';
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+      }
+    </script>
   </body>
 </html>

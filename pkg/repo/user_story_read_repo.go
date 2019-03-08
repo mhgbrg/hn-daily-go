@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func MarkStoryAsRead(db DbConn, userID string, storyID int) error {
+func MarkStoryAsRead(db DbConn, userID, storyID int) error {
 	alreadyRead, err := HasReadStory(db, userID, storyID)
 	if err != nil {
 		return errors.WithMessage(err, "failed to check if story is read by user")
@@ -23,7 +23,7 @@ func MarkStoryAsRead(db DbConn, userID string, storyID int) error {
 	return nil
 }
 
-func insertUserStoryReadRow(db DbConn, userID string, storyID int) error {
+func insertUserStoryReadRow(db DbConn, userID, storyID int) error {
 	_, err := db.Exec(
 		`INSERT INTO user_story_read (user_id, story_id)
 		VALUES ($1, $2)`,
@@ -36,7 +36,7 @@ func insertUserStoryReadRow(db DbConn, userID string, storyID int) error {
 	return nil
 }
 
-func HasReadStory(db DbConn, userID string, storyID int) (bool, error) {
+func HasReadStory(db DbConn, userID, storyID int) (bool, error) {
 	var read bool
 	err := db.QueryRow(
 		`SELECT exists(
@@ -56,7 +56,7 @@ func HasReadStory(db DbConn, userID string, storyID int) (bool, error) {
 	return read, nil
 }
 
-func HasReadStories(db DbConn, userID string, storyIDs []int) (map[int]bool, error) {
+func HasReadStories(db DbConn, userID int, storyIDs []int) (map[int]bool, error) {
 	rows, err := db.Query(
 		`SELECT
 			story_id
