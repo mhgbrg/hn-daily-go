@@ -17,7 +17,12 @@ type SessionStorage struct {
 }
 
 func CreateSessionStorage(db *sql.DB, keys CryptoKeys) SessionStorage {
-	store := sessions.NewCookieStore(keys.HashKey, keys.EncryptionKey)
+	store := sessions.NewCookieStore(
+		keys.HashKey,
+		keys.EncryptionKey,
+		[]byte("CHANGE-THIS-KEY-BEFORE-COMMITTING"),
+		nil,
+	)
 	return SessionStorage{
 		DB:    db,
 		Store: store,
