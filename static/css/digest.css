@@ -1,0 +1,31 @@
+/* --- STORIES --- */
+
+.rank {
+  width: 30px;
+  font-size: 1.2rem;
+  color: #7e7e7e;
+  margin-top: 4px;
+}
+
+.title {
+  font-weight: 400;
+}
+
+.title.is-read {
+  font-weight: 300;
+}
+
+/* --- FOOTER --- */
+
+#device-id {
+  cursor: help;
+}
+
+#copy-device-id {
+  margin-left: 2px;
+  cursor: pointer;
+}
+
+.generated-at {
+  font-size: 0.8rem;
+}

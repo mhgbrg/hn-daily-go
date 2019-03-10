@@ -79,7 +79,8 @@ func createArchiveViewData(
 	nextMonthURL := ArchiveURL(yearMonth.NextMonth())
 	if yearMonth == firstYearMonth {
 		prevMonthURL = ""
-	} else if yearMonth == lastYearMonth {
+	}
+	if yearMonth == lastYearMonth {
 		nextMonthURL = ""
 	}
 

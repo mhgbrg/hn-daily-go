@@ -38,13 +38,16 @@ func GetLatestDigest(templates *Templates, db *sql.DB, sessionStorage SessionSto
 	}
 }
 
-func ChangeUserID(templates *Templates, db *sql.DB, sessionStorage SessionStorage) CustomHandlerFunc {
+func SetDeviceID(templates *Templates, db *sql.DB, sessionStorage SessionStorage) CustomHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		newExternalUserID := r.FormValue("userID")
+		newExternalUserID := r.FormValue("deviceID")
 
 		user, err := repo.LoadUserByExternalID(db, newExternalUserID)
 		if err == repo.ErrUserNotFound {
-			sessionStorage.AddFlash(w, r, "Invalid device ID")
+			err = sessionStorage.AddFlash(w, r, Flash{"Invalid device ID", Failure})
+			if err != nil {
+				return InternalServerError(err)
+			}
 			http.Redirect(w, r, "/", http.StatusFound)
 			return nil
 		} else if err != nil {
@@ -56,7 +59,7 @@ func ChangeUserID(templates *Templates, db *sql.DB, sessionStorage SessionStorag
 			return InternalServerError(err)
 		}
 
-		sessionStorage.AddFlash(w, r, "Device ID updated successfully!")
+		sessionStorage.AddFlash(w, r, Flash{"Device ID updated successfully!", Success})
 		http.Redirect(w, r, "/", http.StatusFound)
 
 		return nil
@@ -110,7 +113,7 @@ type digestViewData struct {
 	GeneratedAt time.Time
 	Stories     []digestViewStory
 	UserID      string
-	Flashes     []string
+	Flashes     []Flash
 }
 
 type digestViewStory struct {
@@ -128,7 +131,7 @@ func createDigestViewData(
 	digest models.Digest,
 	storyReadMap map[int]bool,
 	user models.User,
-	flashes []string,
+	flashes []Flash,
 ) digestViewData {
 	viewStories := make([]digestViewStory, len(digest.Stories))
 	for i, story := range digest.Stories {

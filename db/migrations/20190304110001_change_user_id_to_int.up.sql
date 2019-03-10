@@ -1,7 +1,5 @@
 DROP TABLE user_story_read;
 
-CREATE EXTENSION pgcrypto;
-
 CREATE TABLE app_user (
   id serial PRIMARY KEY,
   external_id text NOT NULL UNIQUE,

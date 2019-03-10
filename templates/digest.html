@@ -1,342 +1,104 @@
-<!DOCTYPE HTML>
-
-<html>
+<!doctype html>
+<html lang="en">
   <head>
-    <title>Hacker News Daily - {{.Weekday}}, {{.Month}} {{.Day}}, {{.Year}}</title>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=575" />
-    <!-- TODO: Install reset.css with npm and include it locally instead of sourcing from a cdn. -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-    <style>
-      /* TODO: Install font with npm and include it locally instead of sourcing from google. */
-      @import url('https://fonts.googleapis.com/css?family=Roboto+Slab:300,400|Roboto:300');
+    <link rel="stylesheet" href="/static/css/global.css" />
+    <link rel="stylesheet" href="/static/css/digest.css" />
 
-      :root {
-        --off-black: #323232;
-        --font-weight-light: 300;
-        --font-weight-normal: 400;
-      }
-
-      body {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 10px 50px 10px;
-        min-height: 100vh;
-        box-sizing: border-box;
-      }
-
-      a {
-        color: #4d98ce;
-      }
-
-      .wrapper {
-        max-width: 1200px;
-      }
-
-      /* --- FLASHES --- */
-      .flash {
-        background-color: #514c4c;
-        padding: 15px 25px;
-        font-family: "Roboto", serif;
-        color: white;
-        border-radius: 6px;
-        margin-bottom: 5px;
-      }
-
-      .remove-flash {
-        float: right;
-        cursor: pointer;
-      }
-
-      /* --- HEADER --- */
-      header {
-        margin-top: 50px;
-        text-align: center;
-        font-family: 'Roboto Slab', serif;
-      }
-
-      header > * {
-        font-weight: var(--font-weight-light);
-        color: var(--off-black);
-      }
-
-      header > h1 {
-        font-size: 50px;
-        margin-bottom: 10px;
-      }
-
-      header > h1 > a {
-        text-decoration: none;
-        color: inherit;
-      }
-
-      header > p {
-        font-size: 28px;
-      }
-
-      /* --- STORIES --- */
-      .stories {
-        margin-top: 50px;
-        margin-bottom: 50px;
-      }
-
-      .story {
-        position: relative;
-        margin-bottom: 40px;
-      }
-
-      .story:last-child {
-        margin-bottom: 0;
-      }
-
-      .rank-and-title {
-        display: flex;
-        justify-content: flex-start;
-      }
-
-      .rank {
-        font-family: 'Roboto Slab', serif;
-        font-weight: var(--font-weight-light);
-        font-size: 18px;
-        color: #7e7e7e;
-        width: 30px;
-        text-align: right;
-        margin-right: 10px;
-        margin-top: 5px;
-        flex-shrink: 0;
-      }
-
-      .title {
-        font-family: 'Roboto Slab', serif;
-        font-weight: var(--font-weight-normal);
-        color: #df4242;
-        font-size: 28px;
-        margin-bottom: 6px;
-      }
-
-      .title.is-read {
-        font-weight: var(--font-weight-light);
-      }
-
-      .title a {
-        color: inherit;
-        text-decoration: none;
-      }
-
-      .meta-info {
-        font-family: 'Roboto', sans-serif;
-        font-size: 16px;
-        font-weight: var(--font-weight-light);
-        color: var(--off-black);
-        margin-left: 40px;
-      }
-
-      .meta-info a {
-        color: var(--off-black);
-        text-decoration: none;
-      }
-
-      .meta-info a:hover {
-        text-decoration: underline;
-      }
-
-      /* --- FOOTER --- */
-      footer {
-        text-align: center;
-      }
-
-      footer p {
-        margin: 5px;
-        font-weight: var(--font-weight-light);
-        font-size: 14px;
-        color: var(--off-black);
-        font-family: 'Roboto', sans-serif;
-      }
-
-      footer .name {
-        margin-top: 15px;
-      }
-
-      footer .archive {
-        margin-bottom: 40px;
-        font-weight: var(--font-weight-light);
-        font-size: 18px;
-        color: #df4242;
-        font-family: 'Roboto Slab', serif;
-      }
-
-      footer .archive a {
-        text-decoration: none;
-        color: inherit;
-      }
-
-      footer .unique-id {
-        position: relative;
-      }
-
-      .unique-id .fa-copy {
-        margin-left: 2px;
-        cursor: pointer;
-      }
-
-      footer .user-id {
-        border-bottom: 1px dashed #D1D1D1;
-      }
-
-      footer .unique-id .enter-id span {
-        text-decoration: none;
-        color: #df4242;
-        cursor: pointer;
-      }
-
-      .tooltip {
-        background: #514c4c;
-        color: white;
-        width: 150px;
-        border-radius: 3px;
-        padding: 10px;
-        text-align: center;
-        margin-bottom: 5px;
-        position: absolute;
-      }
-
-      .tooltip-arrow {
-        border-width: 5px 5px 0 5px;
-        border-color: #514c4c;
-        border-left-color: transparent;
-        border-right-color: transparent;
-        border-bottom-color: transparent;
-        bottom: -5px;
-        left: calc(50% - 5px);
-        margin: 0 5px;
-        width: 0;
-        height: 0;
-        border-style: solid;
-        position: absolute;
-      }
-
-      #user-id-input-container {
-        display: none;
-      }
-
-      #user-id-input {
-        width: 125px;
-        font-size: 14px;
-      }
-
-      .generated-at {
-        margin-top: 40px;
-        font-size: 12px;
-      }
-    </style>
+    <title>Hacker News Daily - {{.Weekday}}, {{.Month}} {{.Day}}, {{.Year}}</title>
   </head>
-  <body>
-    <div class="wrapper">
+  <body class="py-5">
+    <div class="container">
       {{if .Flashes}}
-        <div class="flashes" id="flashes">
+        <div class="pb-4">
           {{range .Flashes}}
-            <div class="flash">
-                {{.}}
-                <span class="remove-flash"><i class="fas fa-times"></i></span>
+            <div class="alert alert-{{if .Success}}success{{else}}danger{{end}} alert-dismissible" role="alert">
+              {{.Message}}
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
             </div>
           {{end}}
         </div>
       {{end}}
-      <header>
-        <h1><a href="/">Hacker News Daily</a></h1>
-        <p>{{.Weekday}}, {{.Month}} {{.Day}}, {{.Year}}</p>
+      <header class="text-center mb-5">
+        <h1 class="display-4 slab mb-0"><a href="/" class="text-dark">Hacker News Daily</a></h1>
+        <h2 class="slab h3 m-0">{{.Weekday}}, {{.Month}} {{.Day}}, {{.Year}}</h2>
       </header>
-      <div class="stories">
+      <div class="mb-5">
         {{range .Stories}}
-          <div class="story">
-            <div class="rank-and-title">
-              <p class="rank">#{{.Rank}}</p>
-              <h2 class="title{{if .IsRead}} is-read{{end}}"><a href="{{.URL}}">{{.Title}}</a></h2>
+          <div class="row mb-3">
+            <div class="col-auto pr-0">
+              <p class="rank slab text-right mb-0">#{{.Rank}}</p>
             </div>
-            <p class="meta-info">{{.Site}} &middot; {{.Points}} points &middot; <a href="{{.CommentsURL}}">{{.NumComments}} comments</a></p>
+            <div class="col">
+              <h3 class="title{{if .IsRead}} is-read{{end}} slab mb-0"><a href="{{.URL}}">{{.Title}}</a></h3>
+              <p class="mb-0">{{.Site}} &middot; {{.Points}} points &middot; <a class="text-dark" href="{{.CommentsURL}}">{{.NumComments}} comments</a></p>
+            </div>
           </div>
         {{end}}
       </div>
-      <footer>
-        <p class="archive"><a href="{{.ArchiveURL}}">Archive</a></p>
-        <div class="unique-id">
-          <form id="user-id-form" action="/change-user-id" method="post">
-            <p>The unique ID of this device is
-              <span id="user-id-container"><span class="user-id" id="user-id">{{.UserID}}</span> <i class="far fa-copy" id="copy-user-id"></i></span>
-              <span id="user-id-input-container"><input id="user-id-input" name="userID" value="{{.UserID}}" /></span>
-            </p>
-            <p class="enter-id"><span id="enter-id">Enter ID from another device<span></p>
-          </form>
-        </div>
+      <footer class="text-center">
+        <p class="slab h4 mb-4"><a href="{{.ArchiveURL}}">Archive</a></p>
+        <p class="mb-0">
+          The unique ID of this device is
+          <mark data-toggle="tooltip"
+                data-placement="top"
+                title="To sync your read/unread history between devices, enter this ID on all the devices you want to sync."
+                id="device-id">{{.UserID}}</mark>
+          <i class="far fa-copy"
+             data-clipboard-text="{{.UserID}}"
+             data-toggle="tooltip"
+             data-placement="top"
+             title="Copied!"
+             id="copy-device-id"></i>
+        </p>
+        <button type="button" class="btn btn-link p-0 mb-4" data-toggle="modal" data-target="#set-device-id-modal">
+          Enter ID from another device
+        </button>
         <p class="generated-at">Generated at {{.GeneratedAt}}</p>
-        <!-- TODO: Add link to Github -->
       </footer>
+      <!-- Modal -->
+      <div class="modal fade" id="set-device-id-modal" tabindex="-1" role="dialog" aria-labelledby="set-device-id-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="set-device-id-modal-label">Enter ID from another device</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <form action="/set-device-id" method="POST">
+              <div class="modal-body">
+                <div class="form-group">
+                  <input type="text" class="form-control" name="deviceID" placeholder="{{.UserID}}">
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Set ID</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
-    <script src="https://unpkg.com/popper.js/dist/umd/popper.min.js"></script>
-    <script src="https://unpkg.com/tooltip.js/dist/umd/tooltip.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
+
     <script>
-      const form = document.getElementById("user-id-form");
-      const userIdElem = document.getElementById("user-id");
-      const userIdContainer = document.getElementById("user-id-container");
-      const userIdInput = document.getElementById("user-id-input");
-      const userIdInputContainer = document.getElementById("user-id-input-container");
-
-      // const tooltip = document.getElementById("tooltip");
-      // userIdElem.addEventListener("mouseenter", () => {
-      //   tooltip.style.opacity = 1;
-      // });
-      // userIdElem.addEventListener("mouseleave", () => {
-      //   tooltip.style.opacity = 0;
-      // });
-
-      const copyUserId = document.getElementById("copy-user-id");
-      copyUserId.addEventListener("click", () => {
-        copyToClipboard(userIdElem.textContent);
+      new ClipboardJS('#copy-device-id');
+      $('#device-id').tooltip();
+      $('#copy-device-id').tooltip({
+        trigger: 'click',
       });
-
-      let editMode = false;
-      const enterId = document.getElementById("enter-id");
-      enterId.addEventListener("click", () => {
-        if (!editMode) {
-          userIdContainer.style.display = "none";
-          userIdInputContainer.style.display = "inline-block";
-          enterId.innerHTML = "Done";
-        } else {
-          form.submit()
-        }
-        editMode = !editMode;
-      });
-
-      const removeFlashButtons = document.getElementsByClassName("remove-flash");
-      Array.from(removeFlashButtons).forEach(
-        button => button.addEventListener(
-          'click',
-          () => {
-            button.parentElement.style.display = 'none';
-          }
-        )
-      );
-
-      const tooltipInstance = new Tooltip(userIdElem, {
-        placement: "top",
-        title: "To sync your read/unread history between devices, copy this ID to all the devices you want to sync.",
-      });
-
-      function copyToClipboard(str) {
-        // Borrowed from https://hackernoon.com/copying-text-to-clipboard-with-javascript-df4d4988697f
-        const el = document.createElement('textarea');
-        el.value = str;
-        el.setAttribute('readonly', '');
-        el.style.position = 'absolute';
-        el.style.left = '-9999px';
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-      }
     </script>
   </body>
 </html>

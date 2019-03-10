@@ -1,151 +1,47 @@
-<!DOCTYPE HTML>
-
-<html>
+<!doctype html>
+<html lang="en">
   <head>
-    <title>Hacker News Daily - Archive {{.Month}}, {{.Year}}</title>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=575" />
-    <!-- TODO: Install reset.css with npm and include it locally instead of sourcing from a cdn. -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.css" />
-    <style>
-      /* TODO: Install font with npm and include it locally instead of sourcing from google. */
-      @import url('https://fonts.googleapis.com/css?family=Roboto+Slab:300,400|Roboto:300');
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-      :root {
-        --off-black: #323232;
-        --font-weight-light: 300;
-        --font-weight-normal: 400;
-      }
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/css/global.css" />
 
-      body {
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items: center;
-        padding: 50px 10px;
-        min-height: 100vh;
-        box-sizing: border-box;
-      }
-
-      a {
-        color: #4d98ce;
-      }
-
-      /* --- HEADER --- */
-      header {
-        text-align: center;
-        font-family: 'Roboto Slab', serif;
-      }
-
-      header > * {
-        font-weight: var(--font-weight-light);
-        color: var(--off-black);
-      }
-
-      header > h1 {
-        font-size: 50px;
-        margin-bottom: 10px;
-      }
-
-      header > h1 > a {
-        text-decoration: none;
-        color: inherit;
-      }
-
-      header > p {
-        font-size: 28px;
-      }
-
-      /* --- MONTH-SELECTOR --- */
-      .year-month-selector {
-        margin-top: 50px;
-        margin-bottom: 25px;
-        display: flex;
-        font-family: 'Roboto Slab', serif;
-        font-size: 28px;
-        font-weight: var(--font-weight-light);
-      }
-
-      .year-month {
-        width: 300px;
-        text-align: center;
-      }
-
-      .icon-wrapper {
-        text-decoration: none;
-        color: inherit;
-        display: flex;
-        align-items: center;
-        user-select: none;
-        width: 9px;
-      }
-
-      .left-icon, .right-icon {
-        --icon-size: 8px;
-        content: '';
-        width: var(--icon-size) !important;
-        height: var(--icon-size) !important;
-        transform: rotate(-45deg);
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      .left-icon {
-        border-left: solid 1px currentColor;
-        border-top: solid 1px currentColor;
-      }
-
-      .right-icon {
-        border-bottom: solid 1px currentColor;
-        border-right: solid 1px currentColor;
-      }
-
-      /* --- DATES --- */
-      .dates {
-        font-family: 'Roboto Slab', serif;
-        font-size: 22px;
-        font-weight: var(--font-weight-light);
-        color: #df4242;
-      }
-
-      .date {
-        margin-top: 16px;
-      }
-
-      .date a {
-        color: inherit;
-        text-decoration: none;
-      }
-    </style>
+    <title>Hacker News Daily - Archive {{.Month}}, {{.Year}}</title>
   </head>
-  <body>
-    <header>
-      <h1><a href="/">Hacker News Daily</a></h1>
-      <p>Archive</p>
-    </header>
-    <div class="year-month-selector">
-      {{if .PrevMonthURL}}
-        <a href="{{.PrevMonthURL}}" class="prev-month icon-wrapper">
-          <div class="left-icon">&nbsp;</div>
-        </a>
-      {{else}}
-        <div class="icon-wrapper"></div>
-      {{end}}
-      <p class="year-month">{{.Month}} {{.Year}}</p>
-      {{if .NextMonthURL}}
-        <a href="{{.NextMonthURL}}" class="next-month icon-wrapper">
-          <div class="right-icon">&nbsp;</div>
-        </a>
-      {{else}}
-        <div class="icon-wrapper"></div>
-      {{end}}
+  <body class="py-5">
+    <div class="container">
+      <header class="text-center mb-5">
+        <h1 class="display-4 slab mb-0"><a href="/" class="text-dark">Hacker News Daily</a></h1>
+        <h2 class="slab h3 m-0">Archive</h2>
+      </header>
+      <div class="text-center mb-4">
+        <div class="row">
+          <div class="col text-right">
+            {{if .PrevMonthURL}}
+              <a href="{{.PrevMonthURL}}" class="text-dark"><i class="fas fa-angle-left"></i></a>
+            {{end}}
+          </div>
+          <div class="col">
+            <h3 class="slab h4">{{.Month}} {{.Year}}</h3>
+          </div>
+          <div class="col text-left">
+            {{if .NextMonthURL}}
+              <a href="{{.NextMonthURL}}" class="text-dark"><i class="fas fa-angle-right"></i></a>
+            {{end}}
+          </div>
+        </div>
+      </div>
+      <div class="text-center">
+        {{range .Dates}}
+          <p class="mb-2"><a href="{{.DigestURL}}">{{.Date}}</a></p>
+        {{end}}
+      </div>
     </div>
-    <div class="dates">
-      {{range .Dates}}
-        <p class="date">
-          <a href="{{.DigestURL}}">{{.Date}}</a>
-        </p>
-      {{end}}
-    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   </body>
 </html>
