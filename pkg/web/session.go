@@ -74,7 +74,23 @@ func (sessionStorage *SessionStorage) GetUser(r *http.Request) (models.User, err
 	return user, nil
 }
 
-func (sessionStorage *SessionStorage) AddFlash(w http.ResponseWriter, r *http.Request, flash string) error {
+type FlashType int
+
+const (
+	Success FlashType = iota
+	Failure
+)
+
+type Flash struct {
+	Message string
+	Type    FlashType
+}
+
+func (flash Flash) Success() bool {
+	return flash.Type == Success
+}
+
+func (sessionStorage *SessionStorage) AddFlash(w http.ResponseWriter, r *http.Request, flash Flash) error {
 	session, err := sessionStorage.getSession(r)
 	if err != nil {
 		return err
@@ -87,25 +103,25 @@ func (sessionStorage *SessionStorage) AddFlash(w http.ResponseWriter, r *http.Re
 	return nil
 }
 
-func (sessionStorage *SessionStorage) Flashes(w http.ResponseWriter, r *http.Request) ([]string, error) {
+func (sessionStorage *SessionStorage) Flashes(w http.ResponseWriter, r *http.Request) ([]Flash, error) {
 	session, err := sessionStorage.getSession(r)
 	if err != nil {
-		return []string{}, err
+		return []Flash{}, err
 	}
 	flashes := session.Flashes()
-	flashesStr := make([]string, len(flashes))
+	converted := make([]Flash, len(flashes))
 	for i, flash := range flashes {
-		str, ok := flash.(string)
+		f, ok := flash.(*Flash)
 		if !ok {
-			return []string{}, errors.Errorf("failed to cast flash message %s to string", flash)
+			return []Flash{}, errors.Errorf("failed to cast flash message %v to type Flash", flash)
 		}
-		flashesStr[i] = str
+		converted[i] = *f
 	}
 	err = session.Save(r, w)
 	if err != nil {
-		return []string{}, errors.Wrap(err, "failed to remove flashes from session")
+		return []Flash{}, errors.Wrap(err, "failed to remove flashes from session")
 	}
-	return flashesStr, nil
+	return converted, nil
 }
 
 func GetOrSetUser(sessionStorage SessionStorage, w http.ResponseWriter, r *http.Request) (models.User, error) {

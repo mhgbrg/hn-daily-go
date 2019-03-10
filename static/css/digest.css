@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto+Slab:300,400|Roboto:300');
+
+body {
+  font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+a, .btn-link {
+  color: #df4242;
+}
+
+a:hover, .btn-link:hover {
+  color: #c14646;
+}
+
+.btn-primary {
+  background-color: #df4242;
+  border-color: #df4242;
+}
+
+.btn-primary:hover, .btn-primary:active {
+  background-color: #c14646 !important;
+  border-color: #c14646 !important;
+}
+
+.btn-primary:focus, .btn-primary:active:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 38, 38, .5) !important;
+}
+
+.slab {
+  font-family: "Roboto Slab", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-weight: 300;
+}
+
+/* --- STORIES --- */
+
+.rank {
+  width: 30px;
+  font-size: 1.2rem;
+  color: #7e7e7e;
+  text-align: right;
+  margin-top: 4px;
+}
+
+.title {
+  font-weight: 400;
+}
+
+.title.is-read {
+  font-weight: 300;
+}
+
+/* --- FOOTER --- */
+
+#device-id {
+  cursor: help;
+}
+
+#copy-device-id {
+  margin-left: 2px;
+  cursor: pointer;
+}
+
+.generated-at {
+  font-size: 0.8rem;
+}
