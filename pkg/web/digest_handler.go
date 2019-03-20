@@ -2,7 +2,9 @@ package web
 
 import (
 	"database/sql"
+	"github.com/gorilla/mux"
 	"net/http"
+	urllib "net/url"
 	"time"
 
 	"github.com/mhgbrg/hndaily/pkg/models"
@@ -11,7 +13,7 @@ import (
 
 func GetDigest(templates *Templates, db *sql.DB, sessionStorage SessionStorage) CustomHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		dateStr := r.URL.Path[len("/digest/"):]
+		dateStr := mux.Vars(r)["date"]
 		date, err := models.ParseDate(dateStr)
 		if err != nil {
 			return NotFoundError(err)
@@ -38,7 +40,7 @@ func GetLatestDigest(templates *Templates, db *sql.DB, sessionStorage SessionSto
 	}
 }
 
-func SetDeviceID(templates *Templates, db *sql.DB, sessionStorage SessionStorage) CustomHandlerFunc {
+func SetDeviceID(db *sql.DB, sessionStorage SessionStorage) CustomHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		newExternalUserID := r.FormValue("deviceID")
 
@@ -59,7 +61,11 @@ func SetDeviceID(templates *Templates, db *sql.DB, sessionStorage SessionStorage
 			return InternalServerError(err)
 		}
 
-		sessionStorage.AddFlash(w, r, Flash{"Device ID updated successfully!", Success})
+		err = sessionStorage.AddFlash(w, r, Flash{"Device ID updated successfully!", Success})
+		if err != nil {
+			return InternalServerError(err)
+		}
+
 		http.Redirect(w, r, "/", http.StatusFound)
 
 		return nil
@@ -94,7 +100,7 @@ func renderPage(
 		return InternalServerError(err)
 	}
 
-	viewData := createDigestViewData(digest, storyReadMap, user, flashes)
+	viewData := createDigestViewData(r.URL, digest, storyReadMap, user, flashes)
 
 	err = templates.Digest.Execute(w, viewData)
 	if err != nil {
@@ -117,17 +123,19 @@ type digestViewData struct {
 }
 
 type digestViewStory struct {
-	Rank        int
-	Title       string
-	URL         string
-	Site        string
-	Points      int
-	NumComments int
-	CommentsURL string
-	IsRead      bool
+	Rank          int
+	Title         string
+	URL           string
+	Site          string
+	Points        int
+	NumComments   int
+	CommentsURL   string
+	IsRead        bool
+	MarkAsReadURL string
 }
 
 func createDigestViewData(
+	url *urllib.URL,
 	digest models.Digest,
 	storyReadMap map[int]bool,
 	user models.User,
@@ -136,14 +144,15 @@ func createDigestViewData(
 	viewStories := make([]digestViewStory, len(digest.Stories))
 	for i, story := range digest.Stories {
 		viewStories[i] = digestViewStory{
-			Rank:        i + 1,
-			Title:       story.Title,
-			URL:         StoryURL(story.ID),
-			Site:        story.URL.Hostname(),
-			Points:      story.Points,
-			NumComments: story.NumComments,
-			CommentsURL: CommentsURL(story.ExternalID),
-			IsRead:      storyReadMap[story.ID],
+			Rank:          i + 1,
+			Title:         story.Title,
+			URL:           StoryURL(story.ID),
+			Site:          story.URL.Hostname(),
+			Points:        story.Points,
+			NumComments:   story.NumComments,
+			CommentsURL:   CommentsURL(story.ExternalID),
+			IsRead:        storyReadMap[story.ID],
+			MarkAsReadURL: MarkAsReadURL(story.ID, url),
 		}
 	}
 

@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 
 	"github.com/mhgbrg/hndaily/pkg/repo"
@@ -19,7 +20,7 @@ func StartServer(config Config) error {
 	db, err := repo.ConnectToDB(config.DatabaseURL)
 	defer db.Close()
 	if err != nil {
-		log.Fatal(errors.WithMessage(err, "failed to connet to database"))
+		log.Fatal(errors.WithMessage(err, "failed to connect to database"))
 	}
 
 	sessionStorage := CreateSessionStorage(db, config.CryptoKeys)
@@ -29,17 +30,18 @@ func StartServer(config Config) error {
 		return errors.WithMessage(err, "failed to load templates")
 	}
 
-	mux := http.NewServeMux()
-	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	mux.HandleFunc("/", Wrap(GetLatestDigest(templates, db, sessionStorage)))
-	mux.HandleFunc("/digest/", Wrap(GetDigest(templates, db, sessionStorage)))
-	mux.HandleFunc("/set-device-id", Wrap(SetDeviceID(templates, db, sessionStorage)))
-	mux.HandleFunc("/story/", Wrap(ReadStory(db, sessionStorage)))
-	mux.HandleFunc("/archive/", Wrap(Archive(templates, db)))
-	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {})
+	router := mux.NewRouter()
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	router.HandleFunc("/", Wrap(GetLatestDigest(templates, db, sessionStorage)))
+	router.HandleFunc("/digest/{date}", Wrap(GetDigest(templates, db, sessionStorage)))
+	router.HandleFunc("/set-device-id", Wrap(SetDeviceID(db, sessionStorage)))
+	router.HandleFunc("/story/{id}", Wrap(ReadStory(db, sessionStorage)))
+	router.HandleFunc("/story/{id}/mark-as-read", Wrap(MarkStoryAsRead(db, sessionStorage)))
+	router.HandleFunc("/archive/{yearMonth}", Wrap(Archive(templates, db)))
+	router.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {})
 
 	return http.ListenAndServe(
 		fmt.Sprintf("%s:%d", config.Hostname, config.Port),
-		handlers.LoggingHandler(os.Stdout, mux),
+		handlers.LoggingHandler(os.Stdout, router),
 	)
 }

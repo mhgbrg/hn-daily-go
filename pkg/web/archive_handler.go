@@ -2,6 +2,7 @@ package web
 
 import (
 	"database/sql"
+	"github.com/gorilla/mux"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -12,7 +13,7 @@ import (
 
 func Archive(templates *Templates, db *sql.DB) CustomHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		yearMonthStr := r.URL.Path[len("/archive/"):]
+		yearMonthStr := mux.Vars(r)["yearMonth"]
 		yearMonth, err := models.ParseYearMonth(yearMonthStr)
 		if err != nil {
 			return NotFoundError(err)

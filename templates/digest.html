@@ -33,7 +33,13 @@
         {{range .Stories}}
           <div class="row mb-3">
             <div class="col-auto pr-0">
-              <p class="rank slab text-right mb-0">#{{.Rank}}</p>
+              <p class="rank{{if .IsRead}} is-read{{end}} slab text-right mb-0">
+                {{if .IsRead}}
+                  #{{.Rank}}
+                {{else}}
+                  <a href="{{.MarkAsReadURL}}">#{{.Rank}}</a>
+                {{end}}
+              </p>
             </div>
             <div class="col">
               <h3 class="title{{if .IsRead}} is-read{{end}} slab mb-0"><a href="{{.URL}}">{{.Title}}</a></h3>
