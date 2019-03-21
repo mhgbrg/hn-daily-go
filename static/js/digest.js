@@ -1,4 +1,12 @@
-'use strict';
+"use strict";
+
+// Check if cached load. If it is, reload page to get new read status for clicked story.
+const inputField = $("#refresh");
+if (inputField.val() === "yes") {
+  location.reload(true);
+} else {
+  inputField.val("yes");
+}
 
 // Set up clipboard and tooltips.
 new ClipboardJS("#copy-device-id");
