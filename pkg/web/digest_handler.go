@@ -123,6 +123,7 @@ type digestViewData struct {
 }
 
 type digestViewStory struct {
+	ID            int
 	Rank          int
 	Title         string
 	URL           string
@@ -144,6 +145,7 @@ func createDigestViewData(
 	viewStories := make([]digestViewStory, len(digest.Stories))
 	for i, story := range digest.Stories {
 		viewStories[i] = digestViewStory{
+			ID:            story.ID,
 			Rank:          i + 1,
 			Title:         story.Title,
 			URL:           StoryURL(story.ID),

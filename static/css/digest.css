@@ -5,12 +5,18 @@
   font-size: 1.2rem;
   color: #7e7e7e;
   margin-top: 4px;
+  font-weight: 400;
 }
 
 .rank > a {
   color: inherit;
   text-decoration: none;
-  font-weight: 400;
+}
+
+.rank button {
+  border: none;
+  color: inherit;
+  font-weight: inherit;
 }
 
 .title {

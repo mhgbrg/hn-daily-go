@@ -15,6 +15,10 @@ func (err HTTPError) Error() string {
 	return fmt.Sprintf("status %d: %+v", err.Code, err.Err)
 }
 
+func BadRequestError(err error) HTTPError {
+	return HTTPError{err, http.StatusBadRequest}
+}
+
 func NotFoundError(err error) HTTPError {
 	return HTTPError{err, http.StatusNotFound}
 }

@@ -2,6 +2,7 @@ package web
 
 import (
 	"database/sql"
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
@@ -65,6 +66,41 @@ func MarkStoryAsRead(db *sql.DB, sessionStorage SessionStorage) CustomHandlerFun
 		}
 
 		http.Redirect(w, r, redirectURL, http.StatusFound)
+
+		return nil
+	}
+}
+
+type OKResponse struct{}
+
+func MarkStoryAsReadJSON(db *sql.DB, sessionStorage SessionStorage) CustomHandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		storyIDStr := mux.Vars(r)["id"]
+		storyID, err := strconv.Atoi(storyIDStr)
+		if err != nil {
+			return NotFoundError(err)
+		}
+
+		user, err := GetOrSetUser(sessionStorage, w, r)
+		if err != nil {
+			return InternalServerError(err)
+		}
+
+		err = repo.MarkStoryAsRead(db, user.ID, storyID)
+		if err != nil {
+			return InternalServerError(err)
+		}
+
+		res, err := json.Marshal(OKResponse{})
+		if err != nil {
+			return InternalServerError(err)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, err = w.Write(res)
+		if err != nil {
+			return InternalServerError(err)
+		}
 
 		return nil
 	}

@@ -33,16 +33,18 @@
         {{range .Stories}}
           <div class="row mb-3">
             <div class="col-auto pr-0">
-              <p class="rank{{if .IsRead}} is-read{{end}} slab text-right mb-0">
+              <div class="rank{{if .IsRead}} is-read{{end}} slab text-right mb-0">
                 {{if .IsRead}}
-                  #{{.Rank}}
+                  <p>#{{.Rank}}</p>
                 {{else}}
-                  <a href="{{.MarkAsReadURL}}">#{{.Rank}}</a>
+                  <form action="{{.MarkAsReadURL}}" method="POST" data-id="{{.ID}}">
+                    <button type="submit" class="slab m-0 p-0">#{{.Rank}}</button>
+                  </form>
                 {{end}}
-              </p>
+              </div>
             </div>
             <div class="col">
-              <h3 class="title{{if .IsRead}} is-read{{end}} slab mb-0"><a href="{{.URL}}">{{.Title}}</a></h3>
+              <h3 class="title{{if .IsRead}} is-read{{end}} slab mb-0" data-id="{{.ID}}"><a href="{{.URL}}">{{.Title}}</a></h3>
               <p class="mb-0">{{.Site}} &middot; {{.Points}} points &middot; <a class="text-dark" href="{{.CommentsURL}}">{{.NumComments}} comments</a></p>
             </div>
           </div>
@@ -99,12 +101,6 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
 
-    <script>
-      new ClipboardJS('#copy-device-id');
-      $('#device-id').tooltip();
-      $('#copy-device-id').tooltip({
-        trigger: 'click',
-      });
-    </script>
+    <script src="/static/js/digest.js"></script>
   </body>
 </html>

@@ -32,13 +32,16 @@ func StartServer(config Config) error {
 
 	router := mux.NewRouter()
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	router.HandleFunc("/", Wrap(GetLatestDigest(templates, db, sessionStorage)))
+	router.HandleFunc("/", Wrap(GetLatestDigest(templates, db, sessionStorage))).Methods("GET")
 	router.HandleFunc("/digest/{date}", Wrap(GetDigest(templates, db, sessionStorage)))
-	router.HandleFunc("/set-device-id", Wrap(SetDeviceID(db, sessionStorage)))
-	router.HandleFunc("/story/{id}", Wrap(ReadStory(db, sessionStorage)))
-	router.HandleFunc("/story/{id}/mark-as-read", Wrap(MarkStoryAsRead(db, sessionStorage)))
-	router.HandleFunc("/archive/{yearMonth}", Wrap(Archive(templates, db)))
-	router.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {})
+	router.HandleFunc("/set-device-id", Wrap(SetDeviceID(db, sessionStorage))).Methods("POST")
+	router.HandleFunc("/story/{id}", Wrap(ReadStory(db, sessionStorage))).Methods("GET")
+	router.HandleFunc("/story/{id}/mark-as-read", Wrap(MarkStoryAsReadJSON(db, sessionStorage))).
+		Methods("POST").
+		Headers("Content-Type", "application/json")
+	router.HandleFunc("/story/{id}/mark-as-read", Wrap(MarkStoryAsRead(db, sessionStorage))).
+		Methods("POST")
+	router.HandleFunc("/archive/{yearMonth}", Wrap(Archive(templates, db))).Methods("GET")
 
 	return http.ListenAndServe(
 		fmt.Sprintf("%s:%d", config.Hostname, config.Port),
