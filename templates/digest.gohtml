@@ -25,10 +25,12 @@
           {{end}}
         </div>
       {{end}}
+
       <header class="text-center mb-5">
         <h1 class="display-4 slab mb-0"><a href="/" class="text-dark">Hacker News Daily</a></h1>
         <h2 class="slab h3 m-0">{{.Weekday}}, {{.Month}} {{.Day}}, {{.Year}}</h2>
       </header>
+
       <div class="mb-5">
         {{range .Stories}}
           <div class="row mb-3">
@@ -50,6 +52,7 @@
           </div>
         {{end}}
       </div>
+
       <footer class="text-center">
         <p class="h5 mb-4"><a href="{{.ArchiveURL}}">Archive</a></p>
         <p class="mb-0">
@@ -70,6 +73,7 @@
         </button>
         <p class="generated-at">Generated at {{.GeneratedAt}}</p>
       </footer>
+
       <!-- Modal -->
       <div class="modal fade" id="set-device-id-modal" tabindex="-1" role="dialog" aria-labelledby="set-device-id-modal-label" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
