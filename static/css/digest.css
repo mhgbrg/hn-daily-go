@@ -42,3 +42,12 @@
 .generated-at {
   font-size: 0.8rem;
 }
+
+/* --- Cache detection --- */
+#refresh {
+  opacity: 0;
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+}
