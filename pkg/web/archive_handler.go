@@ -11,7 +11,7 @@ import (
 	"github.com/mhgbrg/hndaily/pkg/repo"
 )
 
-func Archive(templates *Templates, db *sql.DB) CustomHandlerFunc {
+func Archive(templates *Templates, db *sql.DB, digestRepo repo.DigestRepo) CustomHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		yearMonthStr := mux.Vars(r)["yearMonth"]
 		yearMonth, err := models.ParseYearMonth(yearMonthStr)
@@ -19,7 +19,7 @@ func Archive(templates *Templates, db *sql.DB) CustomHandlerFunc {
 			return NotFoundError(err)
 		}
 
-		dates, err := repo.LoadDatesWithDigests(db, yearMonth)
+		dates, err := digestRepo.LoadDatesWithDigests(db, yearMonth)
 		if err != nil {
 			return InternalServerError(err)
 		}
@@ -27,11 +27,11 @@ func Archive(templates *Templates, db *sql.DB) CustomHandlerFunc {
 			return NotFoundError(errors.New("no digest for month"))
 		}
 
-		firstDigest, err := repo.LoadFirstDigest(db)
+		firstDigest, err := digestRepo.LoadFirstDigest(db)
 		if err != nil {
 			return InternalServerError(err)
 		}
-		lastDigest, err := repo.LoadLatestDigest(db)
+		lastDigest, err := digestRepo.LoadLatestDigest(db)
 		if err != nil {
 			return InternalServerError(err)
 		}

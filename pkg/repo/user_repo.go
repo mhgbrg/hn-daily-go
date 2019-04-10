@@ -12,7 +12,18 @@ import (
 
 var externalUserIDLength = 16
 
-func CreateUser(db DbConn) (models.User, error) {
+type UserRepo interface {
+	CreateUser(db DbConn) (models.User, error)
+	LoadUserByExternalID(db DbConn, externalID string) (models.User, error)
+}
+
+type userRepoImpl struct{}
+
+func CreateUserRepo() UserRepo {
+	return &userRepoImpl{}
+}
+
+func (repo *userRepoImpl) CreateUser(db DbConn) (models.User, error) {
 	externalID, err := generateUniqueExternalID(db)
 	if err != nil {
 		return models.User{}, errors.Wrap(err, "failed to generate external ID for user")
@@ -85,28 +96,7 @@ func insertUser(db DbConn, user models.User) (int, error) {
 
 var ErrUserNotFound = errors.New("user not found")
 
-func LoadUser(db DbConn, id int) (models.User, error) {
-	row := db.QueryRow(
-		`SELECT
-			id,
-			external_id,
-			first_visit
-		FROM
-			app_user
-		WHERE
-			id = $1`,
-		id,
-	)
-	user, err := scanUser(row)
-	if err == sql.ErrNoRows {
-		return models.User{}, ErrUserNotFound
-	} else if err != nil {
-		return models.User{}, errors.Wrap(err, "select query on table `app_user` failed")
-	}
-	return user, nil
-}
-
-func LoadUserByExternalID(db DbConn, externalID string) (models.User, error) {
+func (repo *userRepoImpl) LoadUserByExternalID(db DbConn, externalID string) (models.User, error) {
 	row := db.QueryRow(
 		`SELECT
 			id,

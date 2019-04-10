@@ -30,7 +30,7 @@ func LoadTemplates() (*Templates, error) {
 }
 
 func loadTemplate(name string) (*templatelib.Template, error) {
-	filename := fmt.Sprintf("templates/%s.gohtml", name)
+	filename := fmt.Sprintf("web/templates/%s.gohtml", name)
 	template, err := templatelib.ParseFiles(filename)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse template %s (%s)", name, filename)

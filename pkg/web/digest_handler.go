@@ -11,7 +11,7 @@ import (
 	"github.com/mhgbrg/hndaily/pkg/repo"
 )
 
-func GetDigest(templates *Templates, db *sql.DB, sessionStorage SessionStorage) CustomHandlerFunc {
+func GetDigest(templates *Templates, db *sql.DB, digestRepo repo.DigestRepo, sessionStorage SessionStorage) CustomHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		dateStr := mux.Vars(r)["date"]
 		date, err := models.ParseDate(dateStr)
@@ -19,7 +19,7 @@ func GetDigest(templates *Templates, db *sql.DB, sessionStorage SessionStorage) 
 			return NotFoundError(err)
 		}
 
-		digest, err := repo.LoadDigest(db, date)
+		digest, err := digestRepo.LoadDigest(db, date)
 		if err == repo.DigestNotFoundError {
 			return NotFoundError(err)
 		} else if err != nil {
@@ -30,9 +30,9 @@ func GetDigest(templates *Templates, db *sql.DB, sessionStorage SessionStorage) 
 	}
 }
 
-func GetLatestDigest(templates *Templates, db *sql.DB, sessionStorage SessionStorage) CustomHandlerFunc {
+func GetLatestDigest(templates *Templates, db *sql.DB, digestRepo repo.DigestRepo, sessionStorage SessionStorage) CustomHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		digest, err := repo.LoadLatestDigest(db)
+		digest, err := digestRepo.LoadLatestDigest(db)
 		if err != nil {
 			return InternalServerError(err)
 		}
@@ -40,11 +40,11 @@ func GetLatestDigest(templates *Templates, db *sql.DB, sessionStorage SessionSto
 	}
 }
 
-func SetDeviceID(db *sql.DB, sessionStorage SessionStorage) CustomHandlerFunc {
+func SetDeviceID(db *sql.DB, userRepo repo.UserRepo, sessionStorage SessionStorage) CustomHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		newExternalUserID := r.FormValue("deviceID")
 
-		user, err := repo.LoadUserByExternalID(db, newExternalUserID)
+		user, err := userRepo.LoadUserByExternalID(db, newExternalUserID)
 		if err == repo.ErrUserNotFound {
 			err = sessionStorage.AddFlash(w, r, Flash{"Invalid device ID", Failure})
 			if err != nil {
@@ -80,7 +80,7 @@ func renderPage(
 	r *http.Request,
 	digest models.Digest,
 ) error {
-	user, err := GetOrSetUser(sessionStorage, w, r)
+	user, err := sessionStorage.GetOrSetUser(db, w, r)
 	if err != nil {
 		return InternalServerError(err)
 	}

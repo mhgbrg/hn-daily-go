@@ -1,7 +1,6 @@
 package web
 
 import (
-	"database/sql"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -11,33 +10,38 @@ import (
 	"github.com/mhgbrg/hndaily/pkg/repo"
 )
 
-type SessionStorage struct {
-	Store sessions.Store
-	DB    *sql.DB
+type SessionStorage interface {
+	SetUser(w http.ResponseWriter, r *http.Request, user models.User) error
+	GetUser(db repo.DbConn, r *http.Request) (models.User, error)
+	AddFlash(w http.ResponseWriter, r *http.Request, flash Flash) error
+	Flashes(w http.ResponseWriter, r *http.Request) ([]Flash, error)
+	GetOrSetUser(db repo.DbConn, w http.ResponseWriter, r *http.Request) (models.User, error)
 }
 
-func CreateSessionStorage(db *sql.DB, keys CryptoKeys) SessionStorage {
+type sessionStorageImpl struct {
+	store    sessions.Store
+	userRepo repo.UserRepo
+}
+
+func CreateSessionStorage(userRepo repo.UserRepo, keys CryptoKeys) SessionStorage {
 	store := sessions.NewCookieStore(
 		keys.HashKey,
 		keys.EncryptionKey,
 		[]byte("CHANGE-THIS-KEY-BEFORE-COMMITTING"),
 		nil,
 	)
-	return SessionStorage{
-		DB:    db,
-		Store: store,
-	}
+	return &sessionStorageImpl{store, userRepo}
 }
 
-func (sessionStorage *SessionStorage) getSession(r *http.Request) (*sessions.Session, error) {
-	session, err := sessionStorage.Store.Get(r, "hndaily")
+func (sessionStorage *sessionStorageImpl) getSession(r *http.Request) (*sessions.Session, error) {
+	session, err := sessionStorage.store.Get(r, "hndaily")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get session \"hndaily\" from request")
 	}
 	return session, nil
 }
 
-func (sessionStorage *SessionStorage) SetUser(w http.ResponseWriter, r *http.Request, user models.User) error {
+func (sessionStorage *sessionStorageImpl) SetUser(w http.ResponseWriter, r *http.Request, user models.User) error {
 	session, err := sessionStorage.getSession(r)
 	if err != nil {
 		return err
@@ -52,7 +56,7 @@ func (sessionStorage *SessionStorage) SetUser(w http.ResponseWriter, r *http.Req
 
 var ErrUserNotSet = errors.New("user has not been set on session")
 
-func (sessionStorage *SessionStorage) GetUser(r *http.Request) (models.User, error) {
+func (sessionStorage *sessionStorageImpl) GetUser(db repo.DbConn, r *http.Request) (models.User, error) {
 	session, err := sessionStorage.getSession(r)
 	if err != nil {
 		return models.User{}, err
@@ -65,7 +69,7 @@ func (sessionStorage *SessionStorage) GetUser(r *http.Request) (models.User, err
 	if !ok {
 		return models.User{}, errors.Errorf("failed to cast value %v to string", sessionUserID)
 	}
-	user, err := repo.LoadUserByExternalID(sessionStorage.DB, externalUserID)
+	user, err := sessionStorage.userRepo.LoadUserByExternalID(db, externalUserID)
 	if err == repo.ErrUserNotFound {
 		return models.User{}, ErrUserNotSet
 	} else if err != nil {
@@ -90,7 +94,7 @@ func (flash Flash) Success() bool {
 	return flash.Type == Success
 }
 
-func (sessionStorage *SessionStorage) AddFlash(w http.ResponseWriter, r *http.Request, flash Flash) error {
+func (sessionStorage *sessionStorageImpl) AddFlash(w http.ResponseWriter, r *http.Request, flash Flash) error {
 	session, err := sessionStorage.getSession(r)
 	if err != nil {
 		return err
@@ -103,7 +107,7 @@ func (sessionStorage *SessionStorage) AddFlash(w http.ResponseWriter, r *http.Re
 	return nil
 }
 
-func (sessionStorage *SessionStorage) Flashes(w http.ResponseWriter, r *http.Request) ([]Flash, error) {
+func (sessionStorage *sessionStorageImpl) Flashes(w http.ResponseWriter, r *http.Request) ([]Flash, error) {
 	session, err := sessionStorage.getSession(r)
 	if err != nil {
 		return []Flash{}, err
@@ -124,10 +128,10 @@ func (sessionStorage *SessionStorage) Flashes(w http.ResponseWriter, r *http.Req
 	return converted, nil
 }
 
-func GetOrSetUser(sessionStorage SessionStorage, w http.ResponseWriter, r *http.Request) (models.User, error) {
-	user, err := sessionStorage.GetUser(r)
+func (sessionStorage *sessionStorageImpl) GetOrSetUser(db repo.DbConn, w http.ResponseWriter, r *http.Request) (models.User, error) {
+	user, err := sessionStorage.GetUser(db, r)
 	if err == ErrUserNotSet {
-		user, err = repo.CreateUser(sessionStorage.DB)
+		user, err = sessionStorage.userRepo.CreateUser(db)
 		if err != nil {
 			return models.User{}, errors.WithMessage(err, "failed to create user")
 		}

@@ -8,13 +8,29 @@ import (
 	"github.com/pkg/errors"
 )
 
-func SaveDigest(db DbConn, digest models.Digest) error {
+type DigestRepo interface {
+	SaveDigest(db DbConn, digest models.Digest) error
+	LoadDigest(db DbConn, date models.Date) (models.Digest, error)
+	LoadFirstDigest(db DbConn) (models.Digest, error)
+	LoadLatestDigest(db DbConn) (models.Digest, error)
+	LoadDatesWithDigests(db DbConn, yearMonth models.YearMonth) ([]models.Date, error)
+}
+
+type digestRepoImpl struct {
+	storyRepo StoryRepo
+}
+
+func CreateDigestRepo(storyRepo StoryRepo) DigestRepo {
+	return &digestRepoImpl{storyRepo}
+}
+
+func (repo *digestRepoImpl) SaveDigest(db DbConn, digest models.Digest) error {
 	digestID, err := insertDigestRow(db, digest)
 	if err != nil {
 		return errors.WithMessage(err, "failed to insert digest")
 	}
 
-	if _, err = InsertStories(db, digestID, digest.Stories); err != nil {
+	if _, err = repo.storyRepo.InsertStories(db, digestID, digest.Stories); err != nil {
 		return errors.WithMessage(err, "failed to insert stories")
 	}
 
@@ -36,21 +52,21 @@ func insertDigestRow(db DbConn, digest models.Digest) (int, error) {
 	return id, nil
 }
 
-func LoadDigest(db DbConn, date models.Date) (models.Digest, error) {
-	return loadDigest(db, "WHERE date = $1 ORDER BY generated_at DESC", date.ToTime())
+func (repo *digestRepoImpl) LoadDigest(db DbConn, date models.Date) (models.Digest, error) {
+	return repo.loadDigest(db, "WHERE date = $1 ORDER BY generated_at DESC", date.ToTime())
 }
 
-func LoadFirstDigest(db DbConn) (models.Digest, error) {
-	return loadDigest(db, "ORDER BY date ASC, generated_at DESC")
+func (repo *digestRepoImpl) LoadFirstDigest(db DbConn) (models.Digest, error) {
+	return repo.loadDigest(db, "ORDER BY date ASC, generated_at DESC")
 }
 
-func LoadLatestDigest(db DbConn) (models.Digest, error) {
-	return loadDigest(db, "ORDER BY date DESC, generated_at DESC")
+func (repo *digestRepoImpl) LoadLatestDigest(db DbConn) (models.Digest, error) {
+	return repo.loadDigest(db, "ORDER BY date DESC, generated_at DESC")
 }
 
 var DigestNotFoundError = errors.New("digest not found")
 
-func loadDigest(db DbConn, filter string, args ...interface{}) (models.Digest, error) {
+func (repo *digestRepoImpl) loadDigest(db DbConn, filter string, args ...interface{}) (models.Digest, error) {
 	digest, err := loadDigestRow(db, filter, args...)
 	if err == DigestNotFoundError {
 		return models.Digest{}, err
@@ -58,7 +74,7 @@ func loadDigest(db DbConn, filter string, args ...interface{}) (models.Digest, e
 		return models.Digest{}, errors.WithMessage(err, "failed to load digest row")
 	}
 
-	stories, err := LoadStoriesForDigest(db, digest.ID)
+	stories, err := repo.storyRepo.LoadStoriesForDigest(db, digest.ID)
 	if err != nil {
 		return models.Digest{}, errors.WithMessage(err, "failed to load stories for digest")
 	}
@@ -103,7 +119,7 @@ func scanDigest(s scannable) (models.Digest, error) {
 	return digest, err
 }
 
-func LoadDatesWithDigests(db DbConn, yearMonth models.YearMonth) ([]models.Date, error) {
+func (repo *digestRepoImpl) LoadDatesWithDigests(db DbConn, yearMonth models.YearMonth) ([]models.Date, error) {
 	rows, err := db.Query(
 		`SELECT DISTINCT
 			date

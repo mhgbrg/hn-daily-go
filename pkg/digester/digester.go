@@ -60,12 +60,15 @@ func (apiStory ApiStory) toStory() (models.Story, error) {
 }
 
 func Digest(db *sql.DB, date models.Date) error {
-	digest, err := buildDigest(db, date)
+	storyRepo := repo.CreateStoryRepo()
+	digestRepo := repo.CreateDigestRepo(storyRepo)
+
+	digest, err := buildDigest(db, storyRepo, date)
 	if err != nil {
 		return errors.WithMessage(err, "failed to build digest")
 	}
 
-	err = saveDigest(db, digest)
+	err = saveDigest(db, digestRepo, digest)
 	if err != nil {
 		return errors.WithMessage(err, "failed to save digest")
 	}
@@ -73,13 +76,13 @@ func Digest(db *sql.DB, date models.Date) error {
 	return nil
 }
 
-func buildDigest(db *sql.DB, date models.Date) (models.Digest, error) {
-	candidateStories, err := fetchCandidateStories(db, date)
+func buildDigest(db *sql.DB, storyRepo repo.StoryRepo, date models.Date) (models.Digest, error) {
+	candidateStories, err := fetchCandidateStories(date)
 	if err != nil {
 		return models.Digest{}, errors.WithMessage(err, "failed to fetch candidate stories for digest")
 	}
 
-	newStories, err := filterExistingStories(db, candidateStories)
+	newStories, err := filterExistingStories(db, storyRepo, candidateStories)
 	if err != nil {
 		return models.Digest{}, errors.WithMessage(err, "failed to filter existing stories")
 	}
@@ -92,7 +95,7 @@ func buildDigest(db *sql.DB, date models.Date) (models.Digest, error) {
 	}, nil
 }
 
-func fetchCandidateStories(db *sql.DB, date models.Date) ([]models.Story, error) {
+func fetchCandidateStories(date models.Date) ([]models.Story, error) {
 	endOfDay, _ := time.ParseDuration("23h59m59s")
 	t := date.ToTime()
 	endTime := t.AddDate(0, 0, -1).Add(endOfDay) // 23:59:59 on the day before `date`
@@ -148,13 +151,13 @@ func getURL(url string, retry bool) (*http.Response, error) {
 	return res, nil
 }
 
-func filterExistingStories(db *sql.DB, stories []models.Story) ([]models.Story, error) {
+func filterExistingStories(db *sql.DB, storyRepo repo.StoryRepo, stories []models.Story) ([]models.Story, error) {
 	externalIDs := make([]int, len(stories))
 	for i, story := range stories {
 		externalIDs[i] = story.ExternalID
 	}
 
-	existingStories, err := repo.LoadStoriesByExternalID(db, externalIDs)
+	existingStories, err := storyRepo.LoadStoriesByExternalID(db, externalIDs)
 	if err != nil {
 		return []models.Story{}, errors.WithMessage(err, "failed to filter out existing stories")
 	}
@@ -174,13 +177,13 @@ func filterExistingStories(db *sql.DB, stories []models.Story) ([]models.Story, 
 	return newStories, nil
 }
 
-func saveDigest(db *sql.DB, digest models.Digest) error {
+func saveDigest(db *sql.DB, digestRepo repo.DigestRepo, digest models.Digest) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return errors.Wrap(err, "failed to open db transaction")
 	}
 
-	err = repo.SaveDigest(tx, digest)
+	err = digestRepo.SaveDigest(db, digest)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			return errors.Wrap(rollbackErr, "failed to save digest, failed to rollback transaction")

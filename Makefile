@@ -2,6 +2,9 @@
 all: build
 
 # --- building ---
+.PHONY: build
+build: build_server build_digest
+
 .PHONY: build_digest
 build_digest:
 	go build ./cmd/digest
@@ -26,7 +29,7 @@ serve: build_server
 
 .PHONY: watch_server
 watch_server:
-	ag -l -u | entr -r make serve
+	ag -l | entr -r make serve
 
 # --- db management ---
 .PHONY: create_migration

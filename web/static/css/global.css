@@ -26,6 +26,16 @@ a:hover, .btn-link:hover {
   box-shadow: 0 0 0 0.2rem rgba(255, 38, 38, .5) !important;
 }
 
+.btn-link {
+  border: none;
+  background: none;
+  font-weight: inherit;
+}
+
+.btn-link:focus {
+  outline: none;
+}
+
 .slab {
   font-family: "Roboto Slab", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-weight: 300;

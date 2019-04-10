@@ -8,7 +8,20 @@ import (
 	"github.com/pkg/errors"
 )
 
-func InsertStories(db DbConn, digestID int, stories []models.Story) ([]int, error) {
+type StoryRepo interface {
+	InsertStories(db DbConn, digestID int, stories []models.Story) ([]int, error)
+	LoadStory(db DbConn, id int) (models.Story, error)
+	LoadStoriesForDigest(db DbConn, digestID int) ([]models.Story, error)
+	LoadStoriesByExternalID(db DbConn, externalIDs []int) ([]models.Story, error)
+}
+
+type storyRepoImpl struct{}
+
+func CreateStoryRepo() StoryRepo {
+	return &storyRepoImpl{}
+}
+
+func (repo *storyRepoImpl) InsertStories(db DbConn, digestID int, stories []models.Story) ([]int, error) {
 	stmt, err := db.Prepare(`
 		INSERT INTO story(external_id, posted_at, title, url, author, points, num_comments, digest_id)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -42,7 +55,7 @@ func InsertStories(db DbConn, digestID int, stories []models.Story) ([]int, erro
 
 var StoryNotFoundError = errors.New("story not found")
 
-func LoadStory(db DbConn, id int) (models.Story, error) {
+func (repo *storyRepoImpl) LoadStory(db DbConn, id int) (models.Story, error) {
 	row := db.QueryRow(
 		`SELECT
 			id,
@@ -68,7 +81,7 @@ func LoadStory(db DbConn, id int) (models.Story, error) {
 	return story, nil
 }
 
-func LoadStoriesForDigest(db DbConn, digestID int) ([]models.Story, error) {
+func (repo *storyRepoImpl) LoadStoriesForDigest(db DbConn, digestID int) ([]models.Story, error) {
 	rows, err := db.Query(
 		`SELECT
 			id,
@@ -97,7 +110,7 @@ func LoadStoriesForDigest(db DbConn, digestID int) ([]models.Story, error) {
 	return stories, nil
 }
 
-func LoadStoriesByExternalID(db DbConn, externalIDs []int) ([]models.Story, error) {
+func (repo *storyRepoImpl) LoadStoriesByExternalID(db DbConn, externalIDs []int) ([]models.Story, error) {
 	rows, err := db.Query(
 		`SELECT
 			id,
