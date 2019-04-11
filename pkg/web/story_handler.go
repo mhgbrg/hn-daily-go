@@ -10,6 +10,25 @@ import (
 	"github.com/mhgbrg/hndaily/pkg/repo"
 )
 
+func GetStory(db *sql.DB, storyRepo repo.StoryRepo) CustomHandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) error {
+		storyIDStr := mux.Vars(r)["id"]
+		storyID, err := strconv.Atoi(storyIDStr)
+		if err != nil {
+			return NotFoundError(err)
+		}
+
+		story, err := storyRepo.LoadStory(db, storyID)
+		if err != nil {
+			return NotFoundError(err)
+		}
+
+		http.Redirect(w, r, story.URL.String(), http.StatusFound)
+
+		return nil
+	}
+}
+
 func ReadStory(db *sql.DB, storyRepo repo.StoryRepo, sessionStorage SessionStorage) CustomHandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		storyIDStr := mux.Vars(r)["id"]

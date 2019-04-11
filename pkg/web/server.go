@@ -43,6 +43,8 @@ func StartServer(config Config) error {
 		Methods("GET")
 	router.HandleFunc("/set-device-id", Wrap(SetDeviceID(db, userRepo, sessionStorage))).
 		Methods("POST")
+	router.HandleFunc("/story/{id}", Wrap(GetStory(db, storyRepo))).
+		Methods("GET")
 	router.HandleFunc("/story/{id}", Wrap(ReadStory(db, storyRepo, sessionStorage))).
 		Methods("POST")
 	router.HandleFunc("/story/{id}/mark-as-read", Wrap(MarkStoryAsRead(db, sessionStorage))).
