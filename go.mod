@@ -3,6 +3,8 @@ module github.com/mhgbrg/hndaily
 // +heroku goVersion go1.11
 // +heroku install ./cmd/...
 
+go 1.11
+
 require (
 	github.com/golang-migrate/migrate/v4 v4.2.5
 	github.com/gorilla/handlers v1.4.0
