@@ -47,3 +47,7 @@ rollback_migration:
 .PHONY: drop_db
 drop_db:
 	migrate -source file://db/migrations -database ${DATABASE_URL} drop
+
+.PHONY: clean_db
+clean_db:
+	heroku psql -f scripts/clean_db.sql
